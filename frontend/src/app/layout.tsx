@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav aria-label="Główna">
               <Link href="/">Przewodnik</Link>
-              <Link href="/admin">Parametry</Link>
+              {/* Panel parametrów (/admin) jest ukryty w menu, ale nadal dostępny pod adresem /admin. */}
             </nav>
           </div>
         </header>
