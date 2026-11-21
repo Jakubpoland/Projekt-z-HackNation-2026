@@ -13,8 +13,8 @@
   --unselected: #eef0ef;
   --empty-bg: #e8f2fc;
   --empty-border: #a8c8ea;
-  --summary-bg: #f3dde2;
-  --summary-border: #dfbcc5;
+  --summary-bg: #feeff4;
+  --summary-border: #f5d0dc;
   --mother: #00703c;
   --father: #2b5fb3;
   --warn-bg: #fff6df;
@@ -44,8 +44,8 @@
     --unselected: #232927;
     --empty-bg: #172636;
     --empty-border: #36577d;
-    --summary-bg: #33262a;
-    --summary-border: #5a434a;
+    --summary-bg: #34202a;
+    --summary-border: #5a3444;
     --mother: #3fbf7f;
     --father: #6d9cf0;
     --warn-bg: #2e2612;
