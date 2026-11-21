@@ -28,3 +28,15 @@ npm run dev                  # http://localhost:3000
 Zasady: frontend nie liczy zasiłków i nie wpisuje na sztywno stawek ani tygodni — bierze je z `GET /api/v1/catalog` i z odpowiedzi symulacji. mObywatel, e-ZLA, PUE/eZUS i wysyłka wniosku są oznaczone w UI jako symulacja.
 
 Opis ekranów i prośby do backendu: `agent/06-frontend-legion-540-2026-11-21.md`.
+
+## Windows — automatyczne uruchamianie i pobieranie zmian
+
+Z katalogu repozytorium (np. `C:\Zus\ZUS`) w PowerShellu:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-windows.ps1 -Branch claude/magical-pascal-brns04
+```
+
+Skrypt uruchamia backend (`:8080`) i frontend (`:3000`), otwiera przeglądarkę i co 30 s pobiera nowe commity z wybranej gałęzi
+(bez `-Branch` — z aktualnie wybranej). Zmiany w `backend/` restartują serwer Go, zmiany w `frontend/package*.json` robią `npm ci`,
+resztę frontendu `next dev` przeładowuje sam. Logi: `.dev-logs/`. Ctrl+C zatrzymuje oba serwery.

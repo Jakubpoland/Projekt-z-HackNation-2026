@@ -16,3 +16,4 @@ frontend/.env.local
 *.log
 frontend/*.tsbuildinfo
 frontend/next-env.d.ts
+.dev-logs/
