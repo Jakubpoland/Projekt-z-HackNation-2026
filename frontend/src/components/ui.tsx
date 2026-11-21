@@ -35,7 +35,7 @@ export function TextInput({
   return (
     <Field label={label} hint={hint} htmlFor={id}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <input id={id} type={type} inputMode={inputMode} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+        <input id={id} type={type} inputMode={inputMode} value={value} data-empty={value.trim() === "" ? "" : undefined} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
         {suffix && <span className="muted">{suffix}</span>}
       </div>
     </Field>

@@ -55,7 +55,7 @@ export default function AdminPage() {
         <>
           <div className="field">
             <label htmlFor="flt">Szukaj parametru</label>
-            <input id="flt" type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="np. Rate, Weeks, Grosze" />
+            <input id="flt" type="text" value={filter} onChange={(e) => setFilter(e.target.value)} data-empty={filter === "" ? "" : undefined} placeholder="np. Rate, Weeks, Grosze" />
           </div>
           <div className="table-wrap">
             <table>

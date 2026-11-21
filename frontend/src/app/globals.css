@@ -11,6 +11,8 @@
   --accent-soft: #e2f1e8;
   --accent-selected: #c2e6d1;
   --unselected: #eef0ef;
+  --empty-bg: #e8f2fc;
+  --empty-border: #a8c8ea;
   --mother: #00703c;
   --father: #2b5fb3;
   --warn-bg: #fff6df;
@@ -38,6 +40,8 @@
     --accent-soft: #173326;
     --accent-selected: #1f4a35;
     --unselected: #232927;
+    --empty-bg: #172636;
+    --empty-border: #36577d;
     --mother: #3fbf7f;
     --father: #6d9cf0;
     --warn-bg: #2e2612;
@@ -132,6 +136,10 @@ input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-
 }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
 
+/* Pola jeszcze niewypełnione i niezaznaczone — jasnoniebieskie */
+input[data-empty] { background: var(--empty-bg); border-color: var(--empty-border); }
+input[data-empty]::placeholder { color: color-mix(in srgb, var(--muted) 80%, var(--empty-border)); }
+
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
 @media (max-width: 640px) { .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); } }
@@ -148,7 +156,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .choice small { display: block; color: var(--muted); }
 
 .check { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
-.check input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); flex: 0 0 auto; }
+.check input {
+  appearance: none; -webkit-appearance: none; margin: 3px 0 0; width: 20px; height: 20px; flex: 0 0 auto; cursor: pointer;
+  border: 1.5px solid var(--empty-border); border-radius: 5px; background: var(--empty-bg);
+  display: grid; place-items: center;
+}
+.check input:checked {
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-6.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+  border-color: var(--accent);
+}
 
 .btn {
   font: inherit; border-radius: 10px; padding: 10px 16px; cursor: pointer; border: 1px solid var(--border);

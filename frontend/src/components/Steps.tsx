@@ -217,6 +217,7 @@ function ParentBasis({
                         type="text"
                         inputMode="decimal"
                         value={m.gross}
+                        data-empty={m.gross.trim() === "" ? "" : undefined}
                         onChange={(e) => onChange({ months: p.months.map((x, j) => (j === i ? { ...x, gross: e.target.value } : x)) })}
                       />
                     </td>
@@ -226,6 +227,7 @@ function ParentBasis({
                         type="text"
                         inputMode="numeric"
                         value={m.workedPct}
+                        data-empty={m.workedPct.trim() === "" ? "" : undefined}
                         onChange={(e) => onChange({ months: p.months.map((x, j) => (j === i ? { ...x, workedPct: e.target.value } : x)) })}
                       />
                     </td>
