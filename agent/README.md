@@ -12,5 +12,6 @@
 | [03-kontrakt-api.md](03-kontrakt-api.md) | Jak frontend woła backend |
 | [04-prompt-legion-540.md](04-prompt-legion-540.md) | Zadanie startowe dla agenta frontendu |
 | [05-prompt-thinkpad-t14.md](05-prompt-thinkpad-t14.md) | Czego jeszcze nie ruszać na backendzie |
+| [06-frontend-legion-540-2026-11-21.md](06-frontend-legion-540-2026-11-21.md) | Ekrany frontendu i prośby do backendu (legion-540) |
 
 Nie commituj przykładowych spraw ZUS ani skanów formularzy z zestawów hackathonowych. Wolno z nich korzystać lokalnie przy teście, nie wolno ich kopiować do gita.

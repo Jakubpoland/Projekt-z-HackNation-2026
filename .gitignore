@@ -14,3 +14,5 @@ frontend/.env.local
 # OS / IDE
 .DS_Store
 *.log
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts

@@ -1,11 +1,30 @@
 # Frontend (Next.js) — legion-540
 
-Ten katalog jest miejscem na aplikację Next.js. Na laptopie thinkpad-t14 nie stawiamy tu interfejsu.
+Przewodnik „Zasiłkowy Przewodnik Przyszłego Rodzica”. Właściciel tej części: laptop **legion-540**. Backend w Go robi **thinkpad-t14** (`backend/`).
 
-Zanim powstanie pierwsza strona, przeczytaj:
+## Uruchomienie
 
-- `agent/04-prompt-legion-540.md`
-- `agent/03-kontrakt-api.md`
-- `backend/api/openapi.yaml`
+```bash
+# terminal 1 — backend
+cd backend && go run ./cmd/api
 
-Backend deweloperski: `http://localhost:8080`. Aplikacja ma być responsywna. Logowanie mObywatel, PUE/eZUS i odczyt danych z ZUS zostają symulacją, zgodnie z treścią zadania.
+# terminal 2 — frontend
+cd frontend
+npm install
+cp .env.example .env.local   # opcjonalnie, domyślnie http://localhost:8080
+npm run dev                  # http://localhost:3000
+```
+
+`npm run build` i `npm run typecheck` sprawdzają typy i budują wersję produkcyjną.
+
+## Struktura
+
+- `src/lib/api.ts` — typy i wywołania API (kontrakt: `agent/03-kontrakt-api.md`, `backend/api/openapi.yaml`)
+- `src/lib/state.ts` — stan przewodnika i mapowanie na żądania
+- `src/lib/presets.ts` — zmyślone scenariusze demo i symulowane dane „z ZUS”
+- `src/components/` — kroki przewodnika, wynik, dokumenty
+- `src/app/admin` — edycja parametrów prawnych
+
+Zasady: frontend nie liczy zasiłków i nie wpisuje na sztywno stawek ani tygodni — bierze je z `GET /api/v1/catalog` i z odpowiedzi symulacji. mObywatel, e-ZLA, PUE/eZUS i wysyłka wniosku są oznaczone w UI jako symulacja.
+
+Opis ekranów i prośby do backendu: `agent/06-frontend-legion-540-2026-11-21.md`.
