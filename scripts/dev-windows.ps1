@@ -74,6 +74,7 @@ function Free-Port([int]$port) {
   } catch { }
 }
 
+$script:Restart = $false
 $script:BackendProc = $null
 $script:FrontendProc = $null
 
@@ -154,6 +155,11 @@ try {
     $log = (git log --format="%h %an: %s" "$before..$after" | Select-Object -First 5) -join " | "
     Say "Nowe zmiany: $log" "Cyan"
 
+    if ($changed | Where-Object { $_ -like "scripts/dev-windows.ps1" -or $_ -like "*.bat" }) {
+      Say "Zmienil sie skrypt startowy - uruchamiam go ponownie." "Yellow"
+      $script:Restart = $true
+      break
+    }
     if ($changed | Where-Object { $_ -like "backend/*" }) { Start-Backend }
     if ($changed | Where-Object { $_ -like "frontend/package*.json" }) { Install-Frontend; Start-Frontend }
     elseif ($changed | Where-Object { $_ -like "frontend/next.config.*" -or $_ -like "frontend/.env*" }) { Start-Frontend }
@@ -164,3 +170,4 @@ finally {
   Stop-Tree $script:BackendProc
   Stop-Tree $script:FrontendProc
 }
+if ($script:Restart) { exit 3 }

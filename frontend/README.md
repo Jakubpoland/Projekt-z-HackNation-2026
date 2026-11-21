@@ -29,14 +29,15 @@ Zasady: frontend nie liczy zasiłków i nie wpisuje na sztywno stawek ani tygodn
 
 Opis ekranów i prośby do backendu: `agent/06-frontend-legion-540-2026-11-21.md`.
 
-## Windows — automatyczne uruchamianie i pobieranie zmian
+## Windows — uruchamianie dwuklikiem
 
-Z katalogu repozytorium (np. `C:\Zus\ZUS`) w PowerShellu:
+Pliki w katalogu głównym repozytorium (np. `C:\Zus\ZUS`):
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\dev-windows.ps1 -Branch claude/magical-pascal-brns04
-```
+| Plik | Kiedy | Co robi |
+| --- | --- | --- |
+| `Setup-Przewodnik.bat` | raz, na początku | Instaluje Git, Go i Node.js LTS przez `winget` (jeśli brak), robi `go mod download` i `npm ci`, tworzy skrót „Przewodnik ZUS” na pulpicie. Z `/autostart` dodaje też skrót do Autostartu. |
+| `Start-Przewodnik.bat` (skrót „Przewodnik ZUS”) | za każdym razem | Uruchamia `scripts/dev-windows.ps1`: backend `:8080`, frontend `:3000` w trybie `next dev`, otwiera przeglądarkę, co 15 s robi `git pull --ff-only` na gałęzi z `BRANCH` w pliku `.bat`. |
 
-Skrypt uruchamia backend (`:8080`) i frontend (`:3000`), otwiera przeglądarkę i co 30 s pobiera nowe commity z wybranej gałęzi
-(bez `-Branch` — z aktualnie wybranej). Zmiany w `backend/` restartują serwer Go, zmiany w `frontend/package*.json` robią `npm ci`,
-resztę frontendu `next dev` przeładowuje sam. Logi: `.dev-logs/`. Ctrl+C zatrzymuje oba serwery.
+Zachowanie po pobraniu zmian: `backend/*` → restart Go; `frontend/package*.json` → `npm ci` + restart Next.js; pozostałe pliki frontendu → hot reload w przeglądarce; `scripts/dev-windows.ps1` lub `*.bat` → skrypt kończy się kodem 3, a `.bat` uruchamia go ponownie. Lokalne zmiany nie są nadpisywane (tylko fast-forward). Logi: `.dev-logs/`.
+
+Skrypty `.ps1` i `.bat` muszą zostać w ASCII z końcami linii CRLF (pilnuje tego `.gitattributes`) — Windows PowerShell 5.1 czyta UTF-8 bez BOM jako ANSI.
