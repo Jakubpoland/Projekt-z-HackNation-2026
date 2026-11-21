@@ -220,7 +220,8 @@ details { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14
 details + details { margin-top: 8px; }
 summary { cursor: pointer; font-weight: 600; }
 
-.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.split > .card + .card { margin-top: 0; }
 @media (max-width: 640px) { .split { grid-template-columns: minmax(0, 1fr); } }
 
 .print-doc { font-family: Georgia, "Times New Roman", serif; background: #fff; color: #111; padding: 28px; border: 1px solid var(--border); border-radius: 8px; }
