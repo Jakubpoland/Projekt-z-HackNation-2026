@@ -4,18 +4,18 @@
 
 .DESCRIPTION
   Skrypt dla laptopa legion-540. Co -IntervalSeconds sekund robi `git pull --ff-only`
-  na aktualnie wybranej gałęzi. Gdy przyjdą zmiany:
+  na aktualnie wybranej galezi. Gdy przyjda zmiany:
     - w backend/           -> restartuje serwer Go,
     - w frontend/package*  -> robi `npm ci` i restartuje Next.js,
-    - w pozostałych plikach frontendu -> nic nie trzeba, `next dev` przeładuje stronę sam.
-  Lokalnych zmian nie nadpisuje: gdy pull nie jest możliwy jako fast-forward, tylko o tym pisze.
+    - w pozostalych plikach frontendu -> nic nie trzeba, `next dev` przeladuje strone sam.
+  Lokalnych zmian nie nadpisuje: gdy pull nie jest mozliwy jako fast-forward, tylko o tym pisze.
 
 .EXAMPLE
   cd C:\Zus\ZUS
   powershell -ExecutionPolicy Bypass -File .\scripts\dev-windows.ps1
 
 .EXAMPLE
-  # obserwowanie gałęzi, na którą pushuje agent frontendu
+  # obserwowanie galezi, na ktora pushuje agent frontendu
   powershell -ExecutionPolicy Bypass -File .\scripts\dev-windows.ps1 -Branch claude/magical-pascal-brns04
 #>
 param(
@@ -26,7 +26,7 @@ param(
   [switch]$NoPull
 )
 
-# "Continue": w Windows PowerShell 5.1 komunikaty gita na stderr nie mogą przerywać skryptu.
+# "Continue": w Windows PowerShell 5.1 komunikaty gita na stderr nie moga przerywac skryptu.
 $ErrorActionPreference = "Continue"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $Backend = Join-Path $Root "backend"
@@ -53,14 +53,14 @@ Require "npm.cmd" "Zainstaluj Node.js LTS."
 Set-Location $Root
 
 if ($Branch) {
-  Say "Przełączam na gałąź $Branch" "Cyan"
+  Say "Przelaczam na galaz $Branch" "Cyan"
   git fetch origin $Branch
   git checkout $Branch
   git pull --ff-only origin $Branch
 }
 $CurrentBranch = (git rev-parse --abbrev-ref HEAD).Trim()
 
-# Zabija proces i wszystkie jego dzieci (go run / npm odpalają podprocesy).
+# Zabija proces i wszystkie jego dzieci (go run / npm odpalaja podprocesy).
 function Stop-Tree($proc) {
   if ($proc -and -not $proc.HasExited) {
     & taskkill.exe /PID $proc.Id /T /F 2>$null | Out-Null
@@ -123,20 +123,20 @@ if ($ok) {
   Say "Gotowe: http://localhost:$FrontendPort  (backend: http://localhost:$BackendPort)" "Cyan"
   Start-Process "http://localhost:$FrontendPort"
 } else {
-  Say "Serwery jeszcze nie odpowiadają. Logi: $LogDir" "Yellow"
+  Say "Serwery jeszcze nie odpowiadaja. Logi: $LogDir" "Yellow"
 }
 if ($NoPull) {
-  Say "Tryb bez pobierania zmian (-NoPull). Ctrl+C kończy." "Gray"
+  Say "Tryb bez pobierania zmian (-NoPull). Ctrl+C konczy." "Gray"
 } else {
-  Say "Obserwuję gałąź '$CurrentBranch' co $IntervalSeconds s. Ctrl+C kończy." "Gray"
+  Say "Obserwuje galaz '$CurrentBranch' co $IntervalSeconds s. Ctrl+C konczy." "Gray"
 }
 
 try {
   while ($true) {
     Start-Sleep -Seconds $IntervalSeconds
 
-    if ($script:BackendProc.HasExited) { Say "Backend się zatrzymał — uruchamiam ponownie. Logi: $LogDir\backend.err.log" "Red"; Start-Backend }
-    if ($script:FrontendProc.HasExited) { Say "Frontend się zatrzymał — uruchamiam ponownie. Logi: $LogDir\frontend.err.log" "Red"; Start-Frontend }
+    if ($script:BackendProc.HasExited) { Say "Backend sie zatrzymal - uruchamiam ponownie. Logi: $LogDir\backend.err.log" "Red"; Start-Backend }
+    if ($script:FrontendProc.HasExited) { Say "Frontend sie zatrzymal - uruchamiam ponownie. Logi: $LogDir\frontend.err.log" "Red"; Start-Frontend }
     if ($NoPull) { continue }
 
     $before = (git rev-parse HEAD).Trim()
@@ -146,7 +146,7 @@ try {
 
     $pull = git pull --ff-only --quiet origin $CurrentBranch 2>&1
     if ($LASTEXITCODE -ne 0) {
-      Say "Nie mogę pobrać zmian bez nadpisywania lokalnych plików: $pull" "Red"
+      Say "Nie moge pobrac zmian bez nadpisywania lokalnych plikow: $pull" "Red"
       continue
     }
     $after = (git rev-parse HEAD).Trim()
@@ -160,7 +160,7 @@ try {
   }
 }
 finally {
-  Say "Zatrzymuję serwery…" "Gray"
+  Say "Zatrzymuje serwery..." "Gray"
   Stop-Tree $script:BackendProc
   Stop-Tree $script:FrontendProc
 }
