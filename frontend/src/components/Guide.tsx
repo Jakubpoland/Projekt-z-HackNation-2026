@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, type BasisResult, type Catalog, type SicknessResult, type SimulationResult } from "@/lib/api";
-import { toGrosze, weeksDays, zl } from "@/lib/format";
+import { toGrosze, uniqueWarnings, weeksDays, zl } from "@/lib/format";
 import { basisRequest, initialState, sicknessRequest, simulationRequest, withParent, type GuideState } from "@/lib/state";
 import type { Situation } from "@/lib/api";
 import { DocumentsView } from "./Documents";
@@ -249,9 +249,9 @@ export default function Guide() {
                 <span>Pula rodzicielska</span>
                 <span>{result.entitlement.parentalPoolWeeks} tyg.</span>
               </div>
-              {result.warnings.length > 0 && (
+              {uniqueWarnings(result.warnings).length > 0 && (
                 <button type="button" className="btn" style={{ marginTop: 10, width: "100%" }} onClick={() => setStepId("result")}>
-                  Ostrzeżenia: {result.warnings.length}
+                  Ostrzeżenia: {uniqueWarnings(result.warnings).length}
                 </button>
               )}
             </>

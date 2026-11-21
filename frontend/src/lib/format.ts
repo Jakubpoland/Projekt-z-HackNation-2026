@@ -21,6 +21,19 @@ export function pct(bps: number): string {
   return `${(bps / 100).toLocaleString("pl-PL", { maximumFractionDigits: 2 })}%`;
 }
 
+/** Zostawia jedno ostrzeżenie, gdy ten sam kod i ta sama treść przychodzą dla obojga rodziców. */
+export function uniqueWarnings<T extends { code: string; message: string }>(warnings: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const w of warnings) {
+    const id = `${w.code}\0${w.message}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(w);
+  }
+  return out;
+}
+
 export function weeksDays(days: number): string {
   const w = Math.floor(days / 7);
   const d = days % 7;

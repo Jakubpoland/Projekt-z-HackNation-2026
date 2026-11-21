@@ -3,7 +3,7 @@
 import type { Segment, SimulationResult } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { addDays, fmtDate, parseDate } from "@/lib/dates";
-import { PAYER, PERSON, pct, segmentLabel, weeksDays, zl } from "@/lib/format";
+import { PAYER, PERSON, pct, segmentLabel, uniqueWarnings, weeksDays, zl } from "@/lib/format";
 import type { GuideState } from "@/lib/state";
 
 /** Kolejność odcinków w przykładowym harmonogramie (nie wpływa na kwoty). */
@@ -186,8 +186,8 @@ export function ResultView({ s, result, error, loading }: { s: GuideState; resul
       {result.warnings.length > 0 && (
         <div className="card">
           <h3>Na co uważać</h3>
-          {result.warnings.map((w) => (
-            <div key={w.code} className="alert warn">
+          {uniqueWarnings(result.warnings).map((w, i) => (
+            <div key={`${w.code}-${i}`} className="alert warn">
               {w.message}
             </div>
           ))}

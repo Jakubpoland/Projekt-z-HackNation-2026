@@ -3,7 +3,7 @@
 import type { BasisResult, Catalog, SicknessResult, SimulationResult, TakeoverReason, Title } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { daysUntilAgeLimit } from "@/lib/dates";
-import { pct, TITLE, weeksDays, zl } from "@/lib/format";
+import { pct, TITLE, uniqueWarnings, weeksDays, zl } from "@/lib/format";
 import { PRESETS, simulatedZusData } from "@/lib/presets";
 import { dropGaps, withParent, type GuideState, type ParentForm } from "@/lib/state";
 import { ScanCard } from "./ScanCard";
@@ -508,8 +508,8 @@ function SicknessBox({ r, basisGrosze }: { r: SicknessResult | ApiError | null; 
         <span>Okres zasiłkowy</span>
         <span>{r.periodLimitDays} dni</span>
       </div>
-      {r.warnings.map((w) => (
-        <div key={w.code} className="alert warn" style={{ marginTop: 10 }}>
+      {uniqueWarnings(r.warnings).map((w, i) => (
+        <div key={`${w.code}-${i}`} className="alert warn" style={{ marginTop: 10 }}>
           {w.message}
         </div>
       ))}
