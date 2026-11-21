@@ -1,7 +1,7 @@
 // Przykładowe, zmyślone sytuacje do demo. To NIE są sprawy ZUS z zestawu hackathonowego
 // (tych nie commitujemy — agent/README.md).
 
-import { emptyParent, initialState, type GuideState } from "./state";
+import { dropGaps, emptyParent, initialState, type GuideState } from "./state";
 
 export interface Preset {
   id: string;
@@ -103,7 +103,7 @@ export const PRESETS: Preset[] = [
 
 /** Symulowane dane „pobrane z ZUS po zalogowaniu mObywatel”. */
 export function simulatedZusData(s: GuideState): GuideState {
-  return {
+  return dropGaps({
     ...s,
     mObywatel: true,
     insuredOnEvent: true,
@@ -128,5 +128,5 @@ export function simulatedZusData(s: GuideState): GuideState {
         { gross: "8100", workedPct: "100" },
       ],
     },
-  };
+  }, ["motherTitle", "motherSalary", "payerCount", "insuredOnEvent"]);
 }

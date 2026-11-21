@@ -4,11 +4,37 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, type BasisResult, type Catalog, type SicknessResult, type SimulationResult } from "@/lib/api";
 import { toGrosze, weeksDays, zl } from "@/lib/format";
 import { basisRequest, initialState, sicknessRequest, simulationRequest, withParent, type GuideState } from "@/lib/state";
+import type { Situation } from "@/lib/api";
 import { DocumentsView } from "./Documents";
 import { ResultView } from "./Result";
 import { StepChild, StepInsurance, StepPregnancy, StepSplit, StepStart } from "./Steps";
 
-const STEPS = ["Start", "Ubezpieczenie i dochód", "Ciąża", "Dziecko", "Podział urlopu", "Wynik", "Dokumenty i pomoc"] as const;
+type StepId = "start" | "insurance" | "pregnancy" | "child" | "split" | "result" | "docs";
+
+const ALL_STEPS: { id: StepId; label: string }[] = [
+  { id: "start", label: "Start" },
+  { id: "insurance", label: "Ubezpieczenie i dochód" },
+  { id: "pregnancy", label: "Ciąża" },
+  { id: "child", label: "Dziecko" },
+  { id: "split", label: "Podział urlopu" },
+  { id: "result", label: "Wynik" },
+  { id: "docs", label: "Dokumenty i pomoc" },
+];
+
+/** Przy adopcji nie ma kroku o ciąży. */
+export function guideSteps(situation: Situation) {
+  return ALL_STEPS.filter((step) => step.id !== "pregnancy" || situation !== "adoption");
+}
+
+const GAPS_ON_STEP: Record<StepId, string[]> = {
+  start: ["situation", "insuredOnEvent", "eventDate"],
+  insurance: ["motherTitle", "motherSalary", "payerCount", "fatherTitle", "fatherSalary"],
+  pregnancy: ["pregnancyDays"],
+  child: ["childCount", "zaZyciem", "pregnancyWeek", "birthWeight", "hospitalDays", "childBirthDate"],
+  split: ["whoWorks"],
+  result: [],
+  docs: [],
+};
 
 /** Odracza wywołanie API, żeby nie wysyłać żądania przy każdym znaku. */
 function useDebounced<T>(value: T, ms: number): T {
@@ -22,7 +48,7 @@ function useDebounced<T>(value: T, ms: number): T {
 
 export default function Guide() {
   const [s, setS] = useState<GuideState>(initialState);
-  const [step, setStep] = useState(0);
+  const [stepId, setStepId] = useState<StepId>("start");
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [catalogError, setCatalogError] = useState<ApiError | null>(null);
   const [basis, setBasis] = useState<Record<string, BasisResult | ApiError | undefined>>({});
@@ -122,12 +148,22 @@ export default function Guide() {
     };
   }, [sickReq]);
 
+  const steps = useMemo(() => guideSteps(s.situation), [s.situation]);
+  const step = Math.max(0, steps.findIndex((item) => item.id === stepId));
+  useEffect(() => {
+    if (!steps.some((item) => item.id === stepId)) setStepId("child");
+  }, [steps, stepId]);
+
   const go = (i: number) => {
-    setStep(Math.max(0, Math.min(STEPS.length - 1, i)));
+    const next = steps[Math.max(0, Math.min(steps.length - 1, i))];
+    if (!next) return;
+    setStepId(next.id);
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const props = { s, set: setS, catalog, result };
+  const current = steps[step];
+  const blocked = s.gaps.filter((key) => current && GAPS_ON_STEP[current.id].includes(key));
 
   return (
     <div ref={topRef}>
@@ -139,11 +175,11 @@ export default function Guide() {
       <div className="layout">
         <nav className="stepper card" aria-label="Kroki przewodnika">
           <ol>
-            {STEPS.map((label, i) => (
-              <li key={label}>
+            {steps.map((item, i) => (
+              <li key={item.id}>
                 <button type="button" aria-current={i === step ? "step" : undefined} onClick={() => go(i)}>
                   <span className="num">{i + 1}</span>
-                  <span>{label}</span>
+                  <span>{item.label}</span>
                 </button>
               </li>
             ))}
@@ -151,29 +187,32 @@ export default function Guide() {
         </nav>
 
         <section aria-live="polite">
-          {step === 0 && <StepStart {...props} />}
-          {step === 1 && <StepInsurance {...props} basis={basis} />}
-          {step === 2 && <StepPregnancy {...props} sickness={sickness} />}
-          {step === 3 && <StepChild {...props} />}
-          {step === 4 && (
+          {current?.id === "start" && <StepStart {...props} />}
+          {current?.id === "insurance" && <StepInsurance {...props} basis={basis} />}
+          {current?.id === "pregnancy" && <StepPregnancy {...props} sickness={sickness} />}
+          {current?.id === "child" && <StepChild {...props} />}
+          {current?.id === "split" && (
             <>
               {simError && <div className="alert error">{simError.message}</div>}
               <StepSplit {...props} />
             </>
           )}
-          {step === 5 && <ResultView s={s} result={simError ? null : result} error={simError} loading={loading} />}
-          {step === 6 && <DocumentsView s={s} result={simError ? null : result} />}
+          {current?.id === "result" && <ResultView s={s} result={simError ? null : result} error={simError} loading={loading} />}
+          {current?.id === "docs" && <DocumentsView s={s} result={simError ? null : result} />}
 
+          {blocked.length > 0 && (
+            <div className="alert error">Zanim przejdziesz dalej, uzupełnij pola oznaczone na czerwono.</div>
+          )}
           <div className="btn-row">
             <button type="button" className="btn" onClick={() => go(step - 1)} disabled={step === 0}>
               Wstecz
             </button>
-            {step < STEPS.length - 1 ? (
-              <button type="button" className="btn primary" onClick={() => go(step + 1)}>
-                Dalej: {STEPS[step + 1]}
+            {step < steps.length - 1 ? (
+              <button type="button" className="btn primary" onClick={() => go(step + 1)} disabled={blocked.length > 0}>
+                Dalej: {steps[step + 1].label}
               </button>
             ) : (
-              <button type="button" className="btn" onClick={() => { setS(initialState()); go(0); }}>
+              <button type="button" className="btn" onClick={() => { setS(initialState()); setStepId("start"); }}>
                 Zacznij od nowa
               </button>
             )}
@@ -211,7 +250,7 @@ export default function Guide() {
                 <span>{result.entitlement.parentalPoolWeeks} tyg.</span>
               </div>
               {result.warnings.length > 0 && (
-                <button type="button" className="btn" style={{ marginTop: 10, width: "100%" }} onClick={() => go(5)}>
+                <button type="button" className="btn" style={{ marginTop: 10, width: "100%" }} onClick={() => setStepId("result")}>
                   Ostrzeżenia: {result.warnings.length}
                 </button>
               )}

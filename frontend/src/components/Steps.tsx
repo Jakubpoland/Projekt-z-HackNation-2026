@@ -5,7 +5,8 @@ import { ApiError } from "@/lib/api";
 import { daysUntilAgeLimit } from "@/lib/dates";
 import { pct, TITLE, weeksDays, zl } from "@/lib/format";
 import { PRESETS, simulatedZusData } from "@/lib/presets";
-import { withParent, type GuideState, type ParentForm } from "@/lib/state";
+import { dropGaps, withParent, type GuideState, type ParentForm } from "@/lib/state";
+import { ScanCard } from "./ScanCard";
 import { Check, Choices, Range, Sim, TextInput } from "./ui";
 
 export interface StepProps {
@@ -29,7 +30,20 @@ export function StepStart({ s, set }: StepProps) {
         <Choices
           label="Co się wydarzy (albo wydarzyło)?"
           value={s.situation}
-          onChange={(situation) => set({ ...s, situation, preBirthWeeks: situation === "birth" ? s.preBirthWeeks : 0 })}
+          missing={s.gaps.includes("situation")}
+          onChange={(situation) =>
+            set(
+              dropGaps(
+                {
+                  ...s,
+                  situation,
+                  preBirthWeeks: situation === "birth" ? s.preBirthWeeks : 0,
+                  pregnancy: situation === "adoption" ? { ...s.pregnancy, enabled: false } : s.pregnancy,
+                },
+                ["situation"],
+              ),
+            )
+          }
           options={[
             { value: "birth", label: "Ciąża / poród", hint: "Urodzenie dziecka" },
             { value: "adoption", label: "Adopcja", hint: "Przysposobienie dziecka" },
@@ -58,7 +72,8 @@ export function StepStart({ s, set }: StepProps) {
         <Choices
           label={s.situation === "birth" ? "Czy w dniu porodu jest ubezpieczenie chorobowe?" : "Czy w dniu przyjęcia dziecka jest ubezpieczenie chorobowe?"}
           value={s.insuredOnEvent ? "yes" : "no"}
-          onChange={(v) => set({ ...s, insuredOnEvent: v === "yes" })}
+          missing={s.gaps.includes("insuredOnEvent")}
+          onChange={(v) => set(dropGaps({ ...s, insuredOnEvent: v === "yes" }, ["insuredOnEvent"]))}
           options={[
             { value: "yes", label: "Tak" },
             { value: "no", label: "Nie", hint: "Np. umowa skończyła się wcześniej" },
@@ -69,9 +84,12 @@ export function StepStart({ s, set }: StepProps) {
           hint="Opcjonalnie. Posłuży do harmonogramu urlopów i terminów wniosków."
           type="date"
           value={s.eventDate}
-          onChange={(eventDate) => set({ ...s, eventDate })}
+          missing={s.gaps.includes("eventDate")}
+          onChange={(eventDate) => set(dropGaps({ ...s, eventDate }, ["eventDate"]))}
         />
       </div>
+
+      <ScanCard onApply={(next) => set(next)} />
 
       <div className="card">
         <h3>
@@ -115,12 +133,18 @@ function ParentBasis({
   onChange,
   basis,
   catalog,
+  missingTitle,
+  missingSalary,
+  missingPayer,
 }: {
   who: "mother" | "father";
   p: ParentForm;
   onChange: (patch: Partial<ParentForm>) => void;
   basis: BasisResult | ApiError | undefined;
   catalog: Catalog | null;
+  missingTitle?: boolean;
+  missingSalary?: boolean;
+  missingPayer?: boolean;
 }) {
   const name = who === "mother" ? "Matka" : "Ojciec";
   if (!p.hasRight) {
@@ -141,8 +165,9 @@ function ParentBasis({
         <span className={`dot ${who}`} />
         {name}
       </h3>
-      <div className="field">
+      <div className={missingTitle ? "field need-manual" : "field"}>
         <label htmlFor={`${who}-title`}>Tytuł ubezpieczenia</label>
+        {missingTitle && <span className="hint need-manual-text">Nie odczytano ze skanu. Wybierz tytuł, nawet jeśli etat jest już podświetlony.</span>}
         <select
           id={`${who}-title`}
           value={p.title}
@@ -168,6 +193,7 @@ function ParentBasis({
           hint={threshold ? `Powyżej ${threshold} osób zasiłek wypłaca płatnik, w pozostałych przypadkach ZUS.` : undefined}
           inputMode="numeric"
           value={p.payerInsuredCount}
+          missing={missingPayer}
           onChange={(payerInsuredCount) => onChange({ payerInsuredCount: payerInsuredCount.replace(/\D/g, "") })}
           placeholder="np. 25"
         />
@@ -192,11 +218,12 @@ function ParentBasis({
       />
 
       {p.basisMode === "salary" && (
-        <TextInput label="Wynagrodzenie brutto miesięcznie" inputMode="decimal" suffix="zł" value={p.salary} onChange={(salary) => onChange({ salary })} placeholder="np. 8000" />
+        <TextInput label="Wynagrodzenie brutto miesięcznie" inputMode="decimal" suffix="zł" value={p.salary} missing={missingSalary} onChange={(salary) => onChange({ salary })} placeholder="np. 8000" />
       )}
       {p.basisMode === "months" && (
-        <div className="field">
+        <div className={missingSalary ? "field need-manual" : "field"}>
           <span className="label">Wynagrodzenie brutto z 12 miesięcy przed zdarzeniem</span>
+          {missingSalary && <span className="hint need-manual-text">Nie odczytano ze skanu. Wpisz ręcznie.</span>}
           <span className="hint">Miesiąc przepracowany w mniej niż połowie wypada ze średniej.</span>
           <div className="table-wrap">
             <table>
@@ -243,6 +270,7 @@ function ParentBasis({
           label="Miesięczne podstawy składek (12 miesięcy)"
           hint="Oddziel średnikiem, np. 5200; 5200; 5600. Dla działalności to zadeklarowana podstawa składki chorobowej."
           value={p.revenues}
+          missing={missingSalary}
           onChange={(revenues) => onChange({ revenues })}
         />
       )}
@@ -253,6 +281,7 @@ function ParentBasis({
           inputMode="decimal"
           suffix="zł"
           value={p.direct}
+          missing={missingSalary}
           onChange={(direct) => onChange({ direct })}
         />
       )}
@@ -281,6 +310,21 @@ function ParentBasis({
       </details>
     </div>
   );
+}
+
+function filledKeys(who: "mother" | "father", patch: Partial<ParentForm>): string[] {
+  const keys: string[] = [];
+  const titleKey = who === "mother" ? "motherTitle" : "fatherTitle";
+  const salaryKey = who === "mother" ? "motherSalary" : "fatherSalary";
+  if ("title" in patch) keys.push(titleKey);
+  const hasMoney =
+    ("salary" in patch && !!patch.salary?.trim()) ||
+    ("revenues" in patch && !!patch.revenues?.trim()) ||
+    ("direct" in patch && !!patch.direct?.trim()) ||
+    ("months" in patch && !!patch.months?.some((m) => m.gross.trim()));
+  if (hasMoney) keys.push(salaryKey);
+  if ("payerInsuredCount" in patch && !!patch.payerInsuredCount?.trim()) keys.push("payerCount");
+  return keys;
 }
 
 function defaultMonths(salary: string) {
@@ -328,8 +372,25 @@ export function StepInsurance({ s, set, catalog, basis }: StepProps & { basis: R
         </div>
       )}
       <div className="split">
-        <ParentBasis who="mother" p={s.mother} catalog={catalog} basis={basis.mother} onChange={(patch) => set((prev) => withParent(prev, "mother", patch))} />
-        <ParentBasis who="father" p={s.father} catalog={catalog} basis={basis.father} onChange={(patch) => set((prev) => withParent(prev, "father", patch))} />
+        <ParentBasis
+          who="mother"
+          p={s.mother}
+          catalog={catalog}
+          basis={basis.mother}
+          missingTitle={s.gaps.includes("motherTitle")}
+          missingSalary={s.gaps.includes("motherSalary")}
+          missingPayer={s.gaps.includes("payerCount")}
+          onChange={(patch) => set((prev) => dropGaps(withParent(prev, "mother", patch), filledKeys("mother", patch)))}
+        />
+        <ParentBasis
+          who="father"
+          p={s.father}
+          catalog={catalog}
+          basis={basis.father}
+          missingTitle={s.gaps.includes("fatherTitle")}
+          missingSalary={s.gaps.includes("fatherSalary")}
+          onChange={(patch) => set((prev) => dropGaps(withParent(prev, "father", patch), filledKeys("father", patch)))}
+        />
       </div>
     </>
   );
@@ -356,7 +417,11 @@ export function StepPregnancy({ s, set, catalog, sickness }: StepProps & { sickn
           W ciąży zasiłek chorobowy wynosi 100% podstawy, jeśli na zwolnieniu jest kod <strong>B</strong>. Pracownik najpierw dostaje
           wynagrodzenie chorobowe od pracodawcy{catalog ? ` (${catalog.sickness.sickPayDaysUnder50} dni w roku, ${catalog.sickness.sickPayDaysAge50} po 50. roku życia)` : ""}, potem zasiłek.
         </p>
-        <Check label="Chcę policzyć zwolnienie w ciąży" checked={p.enabled} onChange={(enabled) => up({ enabled })} />
+        <Check
+          label="Chcę policzyć zwolnienie w ciąży"
+          checked={p.enabled}
+          onChange={(enabled) => set(dropGaps({ ...s, pregnancy: { ...p, enabled } }, enabled ? [] : ["pregnancyDays"]))}
+        />
         {p.enabled && (
           <>
             <Choices
@@ -370,7 +435,14 @@ export function StepPregnancy({ s, set, catalog, sickness }: StepProps & { sickn
               ]}
             />
             <div className="grid-2">
-              <TextInput label="Dni zwolnienia" inputMode="numeric" value={p.incapacityDays} onChange={(incapacityDays) => up({ incapacityDays })} suffix="dni" />
+              <TextInput
+                label="Dni zwolnienia"
+                inputMode="numeric"
+                value={p.incapacityDays}
+                missing={s.gaps.includes("pregnancyDays")}
+                onChange={(incapacityDays) => set(dropGaps({ ...s, pregnancy: { ...p, incapacityDays } }, ["pregnancyDays"]))}
+                suffix="dni"
+              />
               <TextInput
                 label="Dni ubezpieczenia przed zwolnieniem"
                 hint={catalog ? `Okres wyczekiwania: ${catalog.sickness.waitingDaysCompulsory} dni (obowiązkowe), ${catalog.sickness.waitingDaysVoluntary} (dobrowolne).` : undefined}
@@ -460,7 +532,8 @@ export function StepChild({ s, set, catalog }: StepProps) {
       <Choices
         label={birth ? "Liczba dzieci urodzonych przy jednym porodzie" : "Liczba dzieci przyjętych jednocześnie"}
         value={s.childCount}
-        onChange={(childCount) => set({ ...s, childCount })}
+        missing={s.gaps.includes("childCount")}
+        onChange={(childCount) => set(dropGaps({ ...s, childCount }, ["childCount"]))}
         options={Array.from({ length: maxChildren }, (_, i) => ({
           value: i + 1,
           label: i + 1 === maxChildren ? `${i + 1}+` : String(i + 1),
@@ -471,14 +544,16 @@ export function StepChild({ s, set, catalog }: StepProps) {
         label="Zaświadczenie „Za życiem” (ciężkie i nieodwracalne upośledzenie albo nieuleczalna choroba)"
         hint={catalog ? `Urlop rodzicielski: ${catalog.parental.oneChildZaZyciemWeeks} tyg. zamiast ${catalog.parental.oneChildWeeks}.` : undefined}
         checked={s.zaZyciem}
-        onChange={(zaZyciem) => set({ ...s, zaZyciem })}
+        missing={s.gaps.includes("zaZyciem")}
+        onDismiss={() => set(dropGaps(s, ["zaZyciem"]))}
+        onChange={(zaZyciem) => set(dropGaps({ ...s, zaZyciem }, ["zaZyciem"]))}
       />
 
       {!birth && (
         <>
           <div className="grid-2">
-            <TextInput label="Data urodzenia dziecka" type="date" value={s.childBirthDate} onChange={(childBirthDate) => set({ ...s, childBirthDate })} />
-            <TextInput label="Data przyjęcia dziecka" type="date" value={s.eventDate} onChange={(eventDate) => set({ ...s, eventDate })} />
+            <TextInput label="Data urodzenia dziecka" type="date" value={s.childBirthDate} missing={s.gaps.includes("childBirthDate")} onChange={(childBirthDate) => set(dropGaps({ ...s, childBirthDate }, ["childBirthDate"]))} />
+            <TextInput label="Data przyjęcia dziecka" type="date" value={s.eventDate} missing={s.gaps.includes("eventDate")} onChange={(eventDate) => set(dropGaps({ ...s, eventDate }, ["eventDate"]))} />
           </div>
           <Choices
             label="Granica wieku dziecka"
@@ -508,9 +583,9 @@ export function StepChild({ s, set, catalog }: StepProps) {
               {s.premature && (
                 <>
                   <div className="grid-3">
-                    <TextInput label="Tydzień ciąży przy porodzie" inputMode="numeric" value={s.pregnancyWeekAtBirth} onChange={(pregnancyWeekAtBirth) => set({ ...s, pregnancyWeekAtBirth })} />
-                    <TextInput label="Najniższa masa urodzeniowa" inputMode="numeric" suffix="g" value={s.birthWeight} onChange={(birthWeight) => set({ ...s, birthWeight })} />
-                    <TextInput label="Dni w szpitalu" hint="Przy bliźniętach — najdłuższy pobyt." inputMode="numeric" value={s.hospitalDays} onChange={(hospitalDays) => set({ ...s, hospitalDays })} />
+                    <TextInput label="Tydzień ciąży przy porodzie" inputMode="numeric" value={s.pregnancyWeekAtBirth} missing={s.gaps.includes("pregnancyWeek")} onChange={(pregnancyWeekAtBirth) => set(dropGaps({ ...s, pregnancyWeekAtBirth }, ["pregnancyWeek"]))} />
+                    <TextInput label="Najniższa masa urodzeniowa" inputMode="numeric" suffix="g" value={s.birthWeight} missing={s.gaps.includes("birthWeight")} onChange={(birthWeight) => set(dropGaps({ ...s, birthWeight }, ["birthWeight"]))} />
+                    <TextInput label="Dni w szpitalu" hint="Przy bliźniętach — najdłuższy pobyt." inputMode="numeric" value={s.hospitalDays} missing={s.gaps.includes("hospitalDays")} onChange={(hospitalDays) => set(dropGaps({ ...s, hospitalDays }, ["hospitalDays"]))} />
                   </div>
                   <Choices
                     label="Kto weźmie uzupełniający urlop macierzyński?"
@@ -700,6 +775,23 @@ export function StepSplit({ s, set, catalog, result }: StepProps) {
       <div className="card">
         <h2>Praca w trakcie urlopu rodzicielskiego</h2>
         <p className="muted">Pracownik może łączyć urlop rodzicielski z pracą do połowy etatu. Urlop wydłuża się proporcjonalnie, a zasiłek jest niższy.</p>
+        {s.gaps.includes("whoWorks") && (
+          <Choices
+            label="Kto łączy urlop rodzicielski z pracą?"
+            missing
+            value=""
+            onChange={(who) => {
+              if (who === "mother") set(dropGaps(withParent(s, "mother", { works: true, workFraction: "1/2" }), ["whoWorks"]));
+              else if (who === "father") set(dropGaps(withParent({ ...s, father: { ...s.father, parentalWeeks: Math.max(s.father.parentalWeeks, 9) } }, "father", { works: true, workFraction: "1/2" }), ["whoWorks"]));
+              else set(dropGaps(s, ["whoWorks"]));
+            }}
+            options={[
+              { value: "mother", label: "Matka" },
+              { value: "father", label: "Ojciec" },
+              { value: "none", label: "Nikt" },
+            ]}
+          />
+        )}
         <div className="split">
           {(["mother", "father"] as const).map((who) => {
             const p = s[who];

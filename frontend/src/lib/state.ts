@@ -77,6 +77,8 @@ export interface GuideState {
   mother: ParentForm;
   father: ParentForm;
   mObywatel: boolean; // symulowane logowanie
+  /** Klucze pól, których skaner nie odczytał. Znikają, gdy użytkownik je uzupełni. */
+  gaps: string[];
 }
 
 export function emptyParent(hasRight: boolean, title: Title = "employee"): ParentForm {
@@ -137,7 +139,14 @@ export function initialState(): GuideState {
     mother: emptyParent(true),
     father: emptyParent(true),
     mObywatel: false,
+    gaps: [],
   };
+}
+
+/** Usuwa klucze pól, które użytkownik właśnie uzupełnił ręcznie. */
+export function dropGaps(s: GuideState, keys: string[]): GuideState {
+  if (keys.length === 0 || !s.gaps.some((g) => keys.includes(g))) return s;
+  return { ...s, gaps: s.gaps.filter((g) => !keys.includes(g)) };
 }
 
 function intOrNull(s: string): number | null {

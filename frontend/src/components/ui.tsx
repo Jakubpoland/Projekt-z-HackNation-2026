@@ -2,12 +2,13 @@
 
 import { useId, type ReactNode } from "react";
 
-export function Field({ label, hint, children, htmlFor }: { label: ReactNode; hint?: ReactNode; children: ReactNode; htmlFor?: string }) {
+export function Field({ label, hint, children, htmlFor, missing }: { label: ReactNode; hint?: ReactNode; children: ReactNode; htmlFor?: string; missing?: boolean }) {
   return (
-    <div className="field">
+    <div className={missing ? "field need-manual" : "field"}>
       <label htmlFor={htmlFor}>{label}</label>
       {children}
       {hint && <span className="hint">{hint}</span>}
+      {missing && <span className="hint need-manual-text">Nie odczytano ze skanu. Wpisz ręcznie.</span>}
     </div>
   );
 }
@@ -21,6 +22,7 @@ export function TextInput({
   inputMode,
   placeholder,
   suffix,
+  missing,
 }: {
   label: ReactNode;
   hint?: ReactNode;
@@ -30,10 +32,11 @@ export function TextInput({
   inputMode?: "decimal" | "numeric";
   placeholder?: string;
   suffix?: string;
+  missing?: boolean;
 }) {
   const id = useId();
   return (
-    <Field label={label} hint={hint} htmlFor={id}>
+    <Field label={label} hint={hint} htmlFor={id} missing={missing}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <input id={id} type={type} inputMode={inputMode} value={value} data-empty={value.trim() === "" ? "" : undefined} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
         {suffix && <span className="muted">{suffix}</span>}
@@ -42,20 +45,47 @@ export function TextInput({
   );
 }
 
-export function Check({ label, hint, checked, onChange }: { label: ReactNode; hint?: ReactNode; checked: boolean; onChange: (v: boolean) => void }) {
+export function Check({
+  label,
+  hint,
+  checked,
+  onChange,
+  missing,
+  onDismiss,
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  missing?: boolean;
+  onDismiss?: () => void;
+}) {
   return (
-    <label className="check">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>
-        {label}
-        {hint && (
-          <>
-            <br />
-            <span className="hint">{hint}</span>
-          </>
-        )}
-      </span>
-    </label>
+    <div className={missing ? "need-manual" : undefined}>
+      <label className="check">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <span>
+          {label}
+          {hint && (
+            <>
+              <br />
+              <span className="hint">{hint}</span>
+            </>
+          )}
+          {missing && (
+            <>
+              <br />
+              <span className="hint need-manual-text">Nie odczytano ze skanu. Zaznacz, jeśli dotyczy, albo potwierdź, że nie.</span>
+            </>
+          )}
+        </span>
+      </label>
+      {missing && onDismiss && (
+        <button type="button" className="btn" onClick={onDismiss}>
+          Nie dotyczy
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -64,15 +94,18 @@ export function Choices<T extends string | number>({
   value,
   onChange,
   options,
+  missing,
 }: {
   label?: ReactNode;
   value: T;
   onChange: (v: T) => void;
   options: { value: T; label: ReactNode; hint?: ReactNode; disabled?: boolean }[];
+  missing?: boolean;
 }) {
   return (
-    <div className="field" role="group">
+    <div className={missing ? "field need-manual" : "field"} role="group">
       {label && <span className="label">{label}</span>}
+      {missing && <span className="hint need-manual-text">Nie odczytano ze skanu. Wybierz właściwą odpowiedź.</span>}
       <div className="choices">
         {options.map((o) => (
           <button
