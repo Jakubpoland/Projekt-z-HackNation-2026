@@ -14,6 +14,9 @@
   --empty-bg: #e8f2fc;
   --empty-border: #a8c8ea;
   --summary-bg: #feeff4;
+  --stepper-bg: #efe9fb;
+  --stepper-border: #d6cbf2;
+  --stepper-hover: #e3daf7;
   --summary-border: #f5d0dc;
   --mother: #00703c;
   --father: #2b5fb3;
@@ -45,6 +48,9 @@
     --empty-bg: #172636;
     --empty-border: #36577d;
     --summary-bg: #34202a;
+    --stepper-bg: #26213a;
+    --stepper-border: #443b66;
+    --stepper-hover: #2f2948;
     --summary-border: #5a3444;
     --mother: #3fbf7f;
     --father: #6d9cf0;
@@ -118,7 +124,8 @@ p { margin: 0 0 0.75em; }
   width: 100%; text-align: left; border: 0; background: transparent; color: var(--text);
   padding: 8px 10px; border-radius: 8px; cursor: pointer; font: inherit; display: flex; gap: 8px; align-items: center;
 }
-.stepper button:hover { background: var(--surface-2); }
+.stepper.card { background: var(--stepper-bg); border-color: var(--stepper-border); }
+.stepper button:hover { background: var(--stepper-hover); }
 .stepper button[aria-current="step"] { background: var(--accent-selected); font-weight: 600; }
 .stepper .num {
   width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); display: grid; place-items: center;
