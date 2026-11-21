@@ -4,7 +4,9 @@
 
 .DESCRIPTION
   Skrypt dla laptopa legion-540. Co -IntervalSeconds sekund robi `git pull --ff-only`
-  na aktualnie wybranej galezi. Gdy przyjda zmiany:
+  na galezi, na ktorej jest ta kopia repozytorium. Kopia z main sledzi origin/main,
+  kopia z galezi Claude sledzi te sama galaz. -Branch przelacza na inna galaz tylko
+  gdy zostanie podany recznie. Gdy przyjda zmiany:
     - w backend/           -> restartuje serwer Go,
     - w frontend/package*  -> robi `npm ci` i restartuje Next.js,
     - w pozostalych plikach frontendu -> nic nie trzeba, `next dev` przeladuje strone sam.
@@ -15,7 +17,7 @@
   powershell -ExecutionPolicy Bypass -File .\scripts\dev-windows.ps1
 
 .EXAMPLE
-  # obserwowanie galezi, na ktora pushuje agent frontendu
+  # tylko gdy trzeba wymusic inna galaz niz ta, na ktorej jest katalog
   powershell -ExecutionPolicy Bypass -File .\scripts\dev-windows.ps1 -Branch claude/magical-pascal-brns04
 #>
 param(
@@ -59,6 +61,10 @@ if ($Branch) {
   git pull --ff-only origin $Branch
 }
 $CurrentBranch = (git rev-parse --abbrev-ref HEAD).Trim()
+if (-not $CurrentBranch -or $CurrentBranch -eq "HEAD") {
+  Say "To repozytorium nie jest na galezi. Wybierz main albo galaz, z ktorej pobrano te kopie." "Red"
+  exit 1
+}
 
 # Zabija proces i wszystkie jego dzieci (go run / npm odpalaja podprocesy).
 function Stop-Tree($proc) {
