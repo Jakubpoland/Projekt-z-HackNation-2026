@@ -9,6 +9,7 @@
   --accent: #00703c;
   --accent-ink: #ffffff;
   --accent-soft: #e2f1e8;
+  --accent-selected: #c2e6d1;
   --mother: #00703c;
   --father: #2b5fb3;
   --warn-bg: #fff6df;
@@ -34,6 +35,7 @@
     --accent: #3fbf7f;
     --accent-ink: #06130c;
     --accent-soft: #173326;
+    --accent-selected: #1f4a35;
     --mother: #3fbf7f;
     --father: #6d9cf0;
     --warn-bg: #2e2612;
@@ -106,7 +108,7 @@ p { margin: 0 0 0.75em; }
   padding: 8px 10px; border-radius: 8px; cursor: pointer; font: inherit; display: flex; gap: 8px; align-items: center;
 }
 .stepper button:hover { background: var(--surface-2); }
-.stepper button[aria-current="step"] { background: var(--accent-soft); font-weight: 600; }
+.stepper button[aria-current="step"] { background: var(--accent-selected); font-weight: 600; }
 .stepper .num {
   width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); display: grid; place-items: center;
   font-size: 0.8rem; flex: 0 0 auto; background: var(--surface);
@@ -137,7 +139,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 10px;
   padding: 10px 14px; cursor: pointer; font: inherit; text-align: left; flex: 1 1 160px;
 }
-.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-selected); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+.choice[aria-pressed="true"] small { color: var(--text); font-weight: 400; }
 .choice small { display: block; color: var(--muted); }
 
 .check { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; cursor: pointer; }
