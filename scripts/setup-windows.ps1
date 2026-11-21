@@ -57,8 +57,9 @@ if (-not $ok) { exit 1 }
 
 Say "Backend: go mod download" "Yellow"
 Push-Location (Join-Path $Root "backend")
-& go mod download | Out-Host
+& go mod download 2>&1 | Out-Null
 Pop-Location
+Say "Backend gotowy (nie potrzebuje dodatkowych bibliotek)." "Green"
 
 Say "Frontend: npm ci" "Yellow"
 Push-Location (Join-Path $Root "frontend")
