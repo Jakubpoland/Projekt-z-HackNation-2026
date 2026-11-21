@@ -133,7 +133,7 @@ export default function Guide() {
     <div ref={topRef}>
       {catalogError && (
         <div className="alert error">
-          <strong>Brak połączenia z serwerem obliczeń.</strong> {catalogError.message}
+          {catalogError.message}
         </div>
       )}
       <div className="layout">
