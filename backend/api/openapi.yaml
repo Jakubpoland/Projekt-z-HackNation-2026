@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Zasiłkowy Przewodnik Przyszłego Rodzica
+  version: 0.1.0
+  description: |
+    Rdzeń kalkulatora zasiłków na czas ciąży i rodzicielstwa.
+    Kontrakt dla frontendu Next.js (legion-540) i backendu Go (thinkpad-t14).
+    Kwoty wejściowe są w groszach. Kwoty wyjściowe mają pole grosze i zloty.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/health:
+    get:
+      summary: Stan procesu i wersja parametrów
+      responses:
+        "200":
+          description: OK
+  /api/v1/catalog:
+    get:
+      summary: Wymiary, stawki i limity do zbudowania formularza
+      responses:
+        "200":
+          description: Katalog wyliczony z aktualnych parametrów
+  /api/v1/parameters:
+    get:
+      summary: Pełny zestaw parametrów prawnych
+      responses:
+        "200":
+          description: Parametry
+  /api/v1/admin/parameters:
+    put:
+      summary: Podmiana parametrów bez zmiany kodu
+      responses:
+        "200":
+          description: Zapisany zestaw
+        "422":
+          description: Parametry nie przeszły walidacji
+  /api/v1/calculations/simulate:
+    post:
+      summary: Zintegrowana symulacja zasiłku macierzyńskiego
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulationInput"
+            example:
+              situation: birth
+              childCount: 1
+              insuredOnEvent: true
+              combinedRateRequest: true
+              daysAfterEventForCombinedRequest: 10
+              mother:
+                hasRight: true
+                title: employee
+                basisGrosze: 1000000
+                maternityWeeks: 20
+                parentalWeeks: 23
+                payerInsuredCount: 25
+              father:
+                hasRight: true
+                title: employee
+                basisGrosze: 1000000
+                parentalWeeks: 9
+                paternityWeeks: 2
+                payerInsuredCount: 5
+      responses:
+        "200":
+          description: Segmenty, sumy, ostrzeżenia i dokumenty
+        "422":
+          description: Błąd dziedziny
+  /api/v1/calculations/basis:
+    post:
+      summary: Miesięczna podstawa wymiaru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BasisInput"
+      responses:
+        "200":
+          description: Podstawa po odjęciu 13,71%
+  /api/v1/calculations/sickness:
+    post:
+      summary: Zasiłek chorobowy w ciąży i wynagrodzenie chorobowe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SicknessInput"
+      responses:
+        "200":
+          description: Podział na wynagrodzenie chorobowe i zasiłek
+components:
+  schemas:
+    SimulationInput:
+      type: object
+      required: [situation, childCount, insuredOnEvent, mother, father]
+      properties:
+        situation:
+          type: string
+          enum: [birth, foster, adoption]
+        childCount:
+          type: integer
+          minimum: 1
+        zaZyciem:
+          type: boolean
+        insuredOnEvent:
+          type: boolean
+        combinedRateRequest:
+          type: boolean
+        daysAfterEventForCombinedRequest:
+          type: integer
+          nullable: true
+        preBirthWeeks:
+          type: integer
+        takeoverReason:
+          type: string
+          enum: [none, resignation_after_14, incapacity, hospital, death, abandonment, mother_uninsured]
+        simultaneousParental:
+          type: boolean
+        parentalParts:
+          type: integer
+        supplementary:
+          $ref: "#/components/schemas/SupplementaryInput"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChildState"
+        mother:
+          $ref: "#/components/schemas/ParentInput"
+        father:
+          $ref: "#/components/schemas/ParentInput"
+        acceptance:
+          type: object
+          properties:
+            daysUntilAgeLimit:
+              type: integer
+    ParentInput:
+      type: object
+      properties:
+        hasRight:
+          type: boolean
+        title:
+          type: string
+          enum: [employee, mandate, business, other]
+        basisGrosze:
+          type: integer
+          description: Miesięczna podstawa wymiaru w groszach. 1000000 = 10000.00 zł.
+        maternityWeeks:
+          type: integer
+          nullable: true
+        maternityDays:
+          type: integer
+          nullable: true
+        parentalWeeks:
+          type: integer
+        paternityWeeks:
+          type: integer
+        work:
+          type: object
+          nullable: true
+          properties:
+            numerator:
+              type: integer
+            denominator:
+              type: integer
+        payerInsuredCount:
+          type: integer
+          nullable: true
+        basisChangedDuringPregnancy:
+          type: boolean
+        possibleShamEngagement:
+          type: boolean
+    SupplementaryInput:
+      type: object
+      properties:
+        pregnancyWeekAtBirth:
+          type: integer
+        lowestBirthWeightGrams:
+          type: integer
+        hospitalDays:
+          type: integer
+        hospitalDaysFromDay5:
+          type: integer
+        termHospitalQualifies:
+          type: boolean
+        assignedTo:
+          type: string
+          enum: [mother, father]
+    ChildState:
+      type: object
+      properties:
+        stillbirth:
+          type: boolean
+        alive:
+          type: boolean
+        deathDay:
+          type: integer
+          nullable: true
+          description: Dzień życia, dzień porodu = 0.
+    BasisInput:
+      type: object
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [employee, non_employee]
+        mode:
+          type: string
+          enum: [average, first_month, second_month, carry_over]
+        months:
+          type: array
+          items:
+            type: object
+        contractMonthlyGrosze:
+          type: integer
+        secondMonthGrosze:
+          type: integer
+        previousBasisGrosze:
+          type: integer
+        monthsSincePreviousBenefit:
+          type: integer
+          nullable: true
+        quarterlyTotalGrosze:
+          type: integer
+        annualGrosze:
+          type: integer
+        revenuesGrosze:
+          type: array
+          items:
+            type: integer
+        applyEmployeeMinimum:
+          type: boolean
+    SicknessInput:
+      type: object
+      properties:
+        isEmployee:
+          type: boolean
+        insurance:
+          type: string
+          enum: [compulsory, voluntary, none]
+        coveredDaysBefore:
+          type: integer
+        waitingPeriodAlreadyMet:
+          type: boolean
+        age50Rule:
+          type: boolean
+        codeB:
+          type: boolean
+        inPregnancy:
+          type: boolean
+        incapacityDays:
+          type: integer
+        sickPayDaysUsed:
+          type: integer
+        previousPeriodDays:
+          type: integer
+        gapDays:
+          type: integer
+        basisGrosze:
+          type: integer
