@@ -21,6 +21,8 @@ export interface StepProps {
 export function StepStart({ s, set }: StepProps) {
   return (
     <>
+      <ScanCard onApply={(next) => set(next)} />
+
       <div className="card">
         <h2>Twoja sytuacja</h2>
         <p className="muted">
@@ -88,8 +90,6 @@ export function StepStart({ s, set }: StepProps) {
           onChange={(eventDate) => set(dropGaps({ ...s, eventDate }, ["eventDate"]))}
         />
       </div>
-
-      <ScanCard onApply={(next) => set(next)} />
 
       <div className="card">
         <h3>

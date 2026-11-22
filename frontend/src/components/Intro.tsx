@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, ApiError, type Catalog } from "@/lib/api";
 import { pct, zl } from "@/lib/format";
+import { saveGuideHandoff } from "@/lib/scan-handoff";
+import { ScanCard } from "./ScanCard";
 
 export function Intro() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState("");
+  const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     api.catalog().then(setCatalog, (e: ApiError) => setError(e.message));
@@ -22,6 +25,19 @@ export function Intro() {
 
   return (
     <article className="reading">
+      <ScanCard
+        onApply={(state) => {
+          saveGuideHandoff(state);
+          setScanned(true);
+        }}
+      />
+      {scanned && (
+        <p className="btn-row" style={{ marginTop: 0 }}>
+          <Link className="btn primary" href="/przewodnik">
+            Otwórz uzupełniony kalkulator
+          </Link>
+        </p>
+      )}
       <header className="card intro-hero">
         <p className="hint">Zanim policzysz kwotę</p>
         <h1>Najpierw przeczytaj, potem licz</h1>

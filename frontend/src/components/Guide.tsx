@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, type BasisResult, type Catalog, type SicknessResult, type SimulationResult } from "@/lib/api";
 import { toGrosze, uniqueWarnings, weeksDays, zl } from "@/lib/format";
+import { takeGuideHandoff } from "@/lib/scan-handoff";
 import { basisRequest, initialState, sicknessRequest, simulationRequest, withParent, type GuideState } from "@/lib/state";
 import type { Situation } from "@/lib/api";
 import { DocumentsView } from "./Documents";
@@ -62,6 +63,12 @@ export default function Guide() {
   // Katalog: wymiary i stawki do formularza.
   useEffect(() => {
     api.catalog().then(setCatalog, (e: ApiError) => setCatalogError(e));
+  }, []);
+
+  // Skan wgrany na stronie wstępu.
+  useEffect(() => {
+    const handed = takeGuideHandoff();
+    if (handed) setS(handed);
   }, []);
 
   // Podstawa wymiaru — liczy backend.

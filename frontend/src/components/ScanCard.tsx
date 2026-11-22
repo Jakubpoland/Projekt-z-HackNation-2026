@@ -39,8 +39,8 @@ export function ScanCard({ onApply }: { onApply: (state: GuideState) => void }) 
   }
 
   return (
-    <div className="card">
-      <h3>Wczytaj skan wniosku</h3>
+    <div className="card" id="skan">
+      <h2>Wczytaj skan wniosku</h2>
       <p className="muted">
         PDF albo zdjęcie. Przewodnik odczytuje pierwsze strony i uzupełnia formularz. Pole, którego nie widać na skanie, zostaje na czerwono i trzeba je wpisać ręcznie.
       </p>
