@@ -53,6 +53,7 @@ export const BENEFIT: Record<string, string> = {
   parental_leave: "Urlop rodzicielski",
   paternity_leave: "Urlop ojcowski",
   supplementary_maternity_leave: "Uzupełniający urlop macierzyński",
+  maternity_amount_until_birth: "Zasiłek w wysokości zasiłku macierzyńskiego do porodu",
 };
 
 export const PAYER: Record<string, string> = {

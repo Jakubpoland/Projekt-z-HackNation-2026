@@ -68,6 +68,10 @@ func Simulate(p params.Parameters, in Input) (Result, error) {
 		return Result{}, apperr.E("PRE_BIRTH", "Wcześniejsze rozpoczęcie urlopu dotyczy tylko urodzenia dziecka.")
 	}
 
+	if err := applyUntilBirth(p, in, &out); err != nil {
+		return Result{}, err
+	}
+
 	if !in.InsuredOnEvent {
 		out.Warnings = append(out.Warnings, Warning{
 			Code:    "NO_INSURANCE_ON_EVENT",
@@ -76,6 +80,7 @@ func Simulate(p params.Parameters, in Input) (Result, error) {
 		if parentClaims(in.Mother) || parentClaims(in.Father) {
 			return Result{}, apperr.E("NO_INSURANCE_ON_EVENT", "Nie można naliczyć zasiłku macierzyńskiego bez ubezpieczenia chorobowego w dniu porodu albo przyjęcia dziecka.")
 		}
+		finalize(in, &out)
 		return out, nil
 	}
 
@@ -194,6 +199,11 @@ func Simulate(p params.Parameters, in Input) (Result, error) {
 		})
 	}
 
+	finalize(in, &out)
+	return out, nil
+}
+
+func finalize(in Input, out *Result) {
 	var mother, father money.Grosze
 	for _, seg := range out.Segments {
 		switch seg.Person {
@@ -206,8 +216,66 @@ func Simulate(p params.Parameters, in Input) (Result, error) {
 	out.MotherTotal = money.NewAmount(mother)
 	out.FatherTotal = money.NewAmount(father)
 	out.GrandTotal = money.NewAmount(mother + father)
-	out.Documents = documents(in, out)
-	return out, nil
+	out.Documents = documents(in, *out)
+}
+
+// applyUntilBirth prices zasiłek w wysokości zasiłku macierzyńskiego until the birth.
+// It is paid by ZUS after the employment ended, at the maternity-leave rate.
+func applyUntilBirth(p params.Parameters, in Input, out *Result) error {
+	if in.UntilBirth == nil {
+		return nil
+	}
+	ub := in.UntilBirth
+	if ub.DaysUntilBirth < 0 {
+		return apperr.E("UNTIL_BIRTH_DAYS", "Liczba dni do porodu nie może być ujemna.")
+	}
+	warn := func(code, message string) {
+		out.Warnings = append(out.Warnings, Warning{Code: code, Message: message})
+	}
+	if in.Situation != "birth" {
+		warn("UNTIL_BIRTH_SITUATION", "Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu dotyczy ciąży zakończonej porodem.")
+		return nil
+	}
+	if in.Mother.Title != "employee" {
+		warn("UNTIL_BIRTH_NOT_EMPLOYEE", "Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu przysługuje pracownicy, której umowa ustała w ciąży.")
+		return nil
+	}
+	switch ub.Reason {
+	case "bankruptcy", "liquidation", "employer_death":
+	case "unlawful_dismissal":
+		if !ub.JudgmentFinal {
+			warn("UNTIL_BIRTH_JUDGMENT", "Przy rozwiązaniu umowy z naruszeniem prawa potrzebny jest prawomocny wyrok sądu. Bez niego zasiłek do dnia porodu nie jest liczony.")
+			return nil
+		}
+	default:
+		warn("UNTIL_BIRTH_REASON", "Podaj przyczynę ustania zatrudnienia: upadłość, likwidacja, śmierć pracodawcy albo prawomocny wyrok.")
+		return nil
+	}
+	if ub.OtherEmploymentProvided {
+		warn("UNTIL_BIRTH_OTHER_JOB", "Zasiłek do dnia porodu nie przysługuje, gdy pracownicy zapewniono inne zatrudnienie.")
+		return nil
+	}
+	if ub.DaysUntilBirth == 0 {
+		warn("UNTIL_BIRTH_DAYS", "Podaj liczbę dni od ustania zatrudnienia do dnia porodu.")
+		return nil
+	}
+	if in.Mother.BasisGrosze < 0 {
+		return apperr.E("BASIS", "Podstawa wymiaru nie może być ujemna.")
+	}
+	seg, err := segment(p, "mother-until-birth", "mother", "maternity_amount_until_birth", in.Mother, p.MaternityRateBps, ub.DaysUntilBirth, ub.DaysUntilBirth, 0, Fraction{})
+	if err != nil {
+		return err
+	}
+	seg.Payer = "zus"
+	out.Segments = append(out.Segments, seg)
+	warn("UNTIL_BIRTH", "Zasiłek w wysokości zasiłku macierzyńskiego jest liczony do dnia porodu, w stawce zasiłku za urlop macierzyński. Po ustaniu ubezpieczenia wypłaca go ZUS.")
+	if in.PreBirthWeeks > 0 {
+		warn("UNTIL_BIRTH_OVERLAP", "Tygodnie urlopu macierzyńskiego przed porodem i zasiłek do dnia porodu mogą dotyczyć tego samego czasu. Nie sumuj ich, jeśli to ten sam okres.")
+	}
+	if !in.InsuredOnEvent {
+		warn("UNTIL_BIRTH_AFTER", "Po porodzie zasiłek macierzyński może przysługiwać mimo ustania ubezpieczenia z tych samych przyczyn. Ta symulacja liczy tylko okres do dnia porodu, bo w dniu porodu nie ma ubezpieczenia.")
+	}
+	return nil
 }
 
 func parentClaims(parent ParentInput) bool {

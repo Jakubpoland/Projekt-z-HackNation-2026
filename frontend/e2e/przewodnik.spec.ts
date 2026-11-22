@@ -125,7 +125,9 @@ test("pensja matki liczy podstawę i zwolnienie w ciąży", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Wynik zwolnienia w ciąży" })).toBeVisible();
   await expect(page.getByText("Wynagrodzenie chorobowe (pracodawca)")).toBeVisible();
   await expect(page.getByText("Zasiłek chorobowy", { exact: true })).toBeVisible();
-  await expect(page.getByText(/ten kalkulator jeszcze go nie liczy/)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /Chcę policzyć świadczenie rehabilitacyjne/ })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /zasiłek do dnia porodu/ })).toBeVisible();
+  await expect(page.getByText(/ten kalkulator jeszcze go nie liczy/)).toHaveCount(0);
 });
 
 test("zlecenie i działalność ustawiają tytuł ubezpieczenia", async ({ page }) => {

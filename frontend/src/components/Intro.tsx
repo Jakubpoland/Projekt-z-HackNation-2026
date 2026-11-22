@@ -127,10 +127,17 @@ export function Intro() {
           {catalog?.sickness.waitingDaysCompulsory ?? "…"} dni przy ubezpieczeniu obowiązkowym i{" "}
           {catalog?.sickness.waitingDaysVoluntary ?? "…"} dni przy dobrowolnym, chyba że przepis zwalnia z wyczekiwania.
         </p>
-        <p className="hint">
-          Po wyczerpaniu okresu zasiłkowego może przysługiwać świadczenie rehabilitacyjne. Ten przewodnik jeszcze go nie liczy.
-          Dane e-ZLA w kalkulatorze są symulacją.
+        <p>
+          Po wyczerpaniu zasiłku chorobowego można dostać świadczenie rehabilitacyjne, jeśli dalsze leczenie rokuje powrót do
+          pracy. Przyznaje je lekarz orzecznik ZUS, na czas potrzebny do odzyskania zdolności, nie dłużej niż{" "}
+          {catalog?.rehab.maxMonths ?? "…"} miesięcy. W ciąży wynosi {rate(catalog?.rehab.pregnancyRateBps)} podstawy. Poza
+          ciążą {rate(catalog?.rehab.firstRateBps)} przez pierwsze {catalog?.rehab.firstMonths ?? "…"} miesiące, a potem{" "}
+          {rate(catalog?.rehab.laterRateBps)}. Nie przysługuje przy emeryturze, rencie z tytułu niezdolności do pracy, zasiłku
+          dla bezrobotnych, świadczeniu albo zasiłku przedemerytalnym, rodzicielskim świadczeniu uzupełniającym, nauczycielskim
+          świadczeniu kompensacyjnym i urlopie dla poratowania zdrowia. Kalkulator nie podnosi podstawy o wskaźnik z Monitora
+          Polskiego, bo tego wskaźnika nie ma w parametrach.
         </p>
+        <p className="hint">Dane e-ZLA w kalkulatorze są symulacją.</p>
       </section>
 
       <section className="card">
@@ -149,6 +156,13 @@ export function Intro() {
           Część tego urlopu matka może wykorzystać jeszcze przed porodem. Resztę, albo całość, po narodzinach. Zasiłek za sam
           urlop macierzyński to {rate(catalog?.ratesBps.maternity)} podstawy, chyba że matka złoży wniosek o pełny wymiar urlopu
           macierzyńskiego i rodzicielskiego w terminie. Wtedy oba okresy są liczone po {rate(catalog?.ratesBps.combinedRequest)}.
+        </p>
+        <p>
+          Gdy umowa o pracę ustanie w ciąży z powodu śmierci pracodawcy, ogłoszenia upadłości albo likwidacji i nie zapewniono
+          innego zatrudnienia, pracownica dostaje zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu. To samo dotyczy
+          rozwiązania umowy z naruszeniem prawa, potwierdzonego prawomocnym wyrokiem. Stawka jest taka jak za urlop
+          macierzyński ({rate(catalog?.ratesBps.maternity)}), a po ustaniu ubezpieczenia wypłaca go ZUS. To nie zastępuje
+          zasiłku za urlop po porodzie.
         </p>
         <p>
           Gdy dziecko urodzi się martwe albo umrze wkrótce po porodzie, wymiar jest krótszy. Przewodnik liczy go osobno i

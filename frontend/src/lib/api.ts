@@ -55,6 +55,13 @@ export interface Catalog {
     waitingDaysVoluntary: number;
     payerInsuredThreshold: number;
   };
+  rehab: {
+    firstMonths: number;
+    maxMonths: number;
+    firstRateBps: number;
+    laterRateBps: number;
+    pregnancyRateBps: number;
+  };
   notes: string[];
 }
 
@@ -118,6 +125,12 @@ export interface SimulationInput {
   mother: ParentInput;
   father: ParentInput;
   acceptance?: { daysUntilAgeLimit: number } | null;
+  untilBirth?: {
+    reason: "bankruptcy" | "liquidation" | "employer_death" | "unlawful_dismissal";
+    otherEmploymentProvided: boolean;
+    judgmentFinal: boolean;
+    daysUntilBirth: number;
+  } | null;
 }
 
 export interface Warning {
@@ -219,6 +232,14 @@ export interface SicknessInput {
   previousPeriodDays: number;
   gapDays: number;
   basisGrosze: number;
+  rehab?: {
+    requested: boolean;
+    assessorGranted: boolean;
+    blockingEntitlement: boolean;
+    insuranceEnded: boolean;
+    days: number;
+    inPregnancy: boolean;
+  };
 }
 
 export interface SicknessResult {
@@ -235,6 +256,19 @@ export interface SicknessResult {
   benefitTotal: Amount;
   warnings: Warning[];
   parametersVersion: string;
+  rehab?: {
+    eligible: boolean;
+    days: number;
+    capped: boolean;
+    firstDays: number;
+    laterDays: number;
+    firstRateBps: number;
+    laterRateBps: number;
+    firstDaily: Amount;
+    laterDaily: Amount;
+    total: Amount;
+    maxDays: number;
+  };
 }
 
 /** Błąd z API: 422 (reguła) albo 400 (JSON). `message` jest po polsku. */

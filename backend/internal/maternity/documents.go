@@ -43,6 +43,12 @@ func documents(in Input, out Result) []Document {
 	if in.Situation == "foster" || in.Situation == "adoption" {
 		add("przyjecie-dziecka", "child", "Dokument przyjęcia dziecka na wychowanie jako rodzina zastępcza niezawodowa albo wystąpienia do sądu o przysposobienie.")
 	}
+	for _, seg := range out.Segments {
+		if seg.Benefit == "maternity_amount_until_birth" && seg.CalendarDays > 0 {
+			add("ZAM-do-porodu", "mother", "Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu wypłaca ZUS. Do wniosku dołącza się dokument ustania zatrudnienia, a przy rozwiązaniu umowy z naruszeniem prawa — prawomocny wyrok.")
+			break
+		}
+	}
 	if out.CombinedRateApplied {
 		add("wniosek-81-5", "mother", "Pisemny wniosek matki o zasiłek za pełny okres urlopu macierzyńskiego i rodzicielskiego, złożony nie później niż 21 dni po porodzie.")
 	}

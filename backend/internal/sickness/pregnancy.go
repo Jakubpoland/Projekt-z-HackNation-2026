@@ -29,6 +29,8 @@ type Input struct {
 	GapDays int `json:"gapDays"`
 	// BasisGrosze is optional. Zero skips the money figures.
 	BasisGrosze int64 `json:"basisGrosze"`
+	// Rehab is optional. Omitted means the caller did not ask for świadczenie rehabilitacyjne.
+	Rehab *RehabInput `json:"rehab,omitempty"`
 }
 
 // Result splits a spell into employer sick pay and ZUS (or payer) benefit.
@@ -46,6 +48,8 @@ type Result struct {
 	BenefitTotal      money.Amount `json:"benefitTotal"`
 	Warnings          []Warning    `json:"warnings"`
 	ParametersVersion string       `json:"parametersVersion"`
+	// Rehab is set only when the caller asked for świadczenie rehabilitacyjne.
+	Rehab *RehabResult `json:"rehab,omitempty"`
 }
 
 // Warning is a stable code plus a Polish sentence.
@@ -73,7 +77,7 @@ func Calculate(p params.Parameters, in Input) (Result, error) {
 			Message: "Brak ubezpieczenia chorobowego. Zasiłek chorobowy nie przysługuje.",
 		})
 		out.UnpaidDays = in.IncapacityDays
-		return out, nil
+		return finish(p, in, out)
 	}
 	if in.Insurance != "compulsory" && in.Insurance != "voluntary" {
 		return Result{}, apperr.E("INSURANCE_KIND", "Ubezpieczenie musi być compulsory, voluntary albo none.")
@@ -89,7 +93,7 @@ func Calculate(p params.Parameters, in Input) (Result, error) {
 			Message: "Okres wyczekiwania nie jest spełniony. Dla ubezpieczenia obowiązkowego to co do zasady 30 dni, dla dobrowolnego 90 dni. Są wyjątki ustawowe, których ten rdzeń nie rozstrzyga automatycznie.",
 		})
 		out.UnpaidDays = in.IncapacityDays
-		return out, nil
+		return finish(p, in, out)
 	}
 
 	limit := p.BenefitPeriodDays
@@ -153,6 +157,13 @@ func Calculate(p params.Parameters, in Input) (Result, error) {
 		out.BenefitDaily = money.NewAmount(benefitDaily)
 		out.SickPayTotal = money.NewAmount(sickDaily * money.Grosze(out.SickPayDays))
 		out.BenefitTotal = money.NewAmount(benefitDaily * money.Grosze(out.BenefitDays))
+	}
+	return finish(p, in, out)
+}
+
+func finish(p params.Parameters, in Input, out Result) (Result, error) {
+	if err := applyRehab(p, in, &out); err != nil {
+		return Result{}, err
 	}
 	return out, nil
 }
