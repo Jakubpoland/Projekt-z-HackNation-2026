@@ -473,18 +473,125 @@ export function StepPregnancy({ s, set, catalog, sickness }: StepProps & { sickn
           </>
         )}
       </div>
-      {p.enabled && <SicknessBox r={sickness} basisGrosze={s.mother.basisGrosze} />}
+
+      <div className="card">
+        <h2>Świadczenie rehabilitacyjne</h2>
+        <p className="muted">
+          Po wyczerpaniu zasiłku chorobowego, gdy dalsze leczenie rokuje odzyskanie zdolności do pracy. Decyzję wydaje lekarz
+          orzecznik ZUS. Kalkulator tylko wycenia okres, który ZUS już przyznał
+          {catalog
+            ? `: ${pct(catalog.rehab.pregnancyRateBps)} podstawy w ciąży, poza ciążą ${pct(catalog.rehab.firstRateBps)} przez pierwsze ${catalog.rehab.firstMonths} miesiące i ${pct(catalog.rehab.laterRateBps)} później, nie dłużej niż ${catalog.rehab.maxMonths} miesięcy.`
+            : "."}
+        </p>
+        <Check
+          label="Chcę policzyć świadczenie rehabilitacyjne"
+          checked={p.rehabEnabled}
+          onChange={(rehabEnabled) => up({ rehabEnabled })}
+        />
+        {p.rehabEnabled && (
+          <>
+            <Check
+              label="Lekarz orzecznik ZUS albo komisja lekarska przyznała to świadczenie"
+              checked={p.rehabAssessorGranted}
+              onChange={(rehabAssessorGranted) => up({ rehabAssessorGranted })}
+            />
+            <Check
+              label="Mam emeryturę, rentę z tytułu niezdolności do pracy, zasiłek dla bezrobotnych, świadczenie przedemerytalne, zasiłek przedemerytalny, rodzicielskie świadczenie uzupełniające, nauczycielskie świadczenie kompensacyjne albo urlop dla poratowania zdrowia"
+              checked={p.rehabBlockingEntitlement}
+              onChange={(rehabBlockingEntitlement) => up({ rehabBlockingEntitlement })}
+            />
+            <Check
+              label="Ubezpieczenie chorobowe już ustało"
+              hint="Po ustaniu tytułu jest limit 100% przeciętnego wynagrodzenia. Tej kwoty nie ma w parametrach, więc kalkulator jej nie ucina."
+              checked={p.rehabInsuranceEnded}
+              onChange={(rehabInsuranceEnded) => up({ rehabInsuranceEnded })}
+            />
+            <Check
+              label="Niezdolność przypada w ciąży"
+              hint={catalog ? `Wtedy stawka to ${pct(catalog.rehab.pregnancyRateBps)} podstawy, a nie ${pct(catalog.rehab.firstRateBps)} i ${pct(catalog.rehab.laterRateBps)}.` : undefined}
+              checked={p.rehabInPregnancy}
+              onChange={(rehabInPregnancy) => up({ rehabInPregnancy })}
+            />
+            <TextInput
+              label="Dni przyznane przez ZUS"
+              inputMode="numeric"
+              value={p.rehabDays}
+              onChange={(rehabDays) => up({ rehabDays })}
+              suffix="dni"
+            />
+            <p className="hint">
+              Trzy miesiące i dwanaście miesięcy liczone są jako miesiące po {catalog?.basis.dailyDivisor ?? 30} dni, tak jak stawka dzienna.
+              Podstawy nie zwaloryzowano — wskaźnika z Monitora Polskiego nie ma w parametrach.
+            </p>
+          </>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Zasiłek w wysokości zasiłku macierzyńskiego do porodu</h2>
+        <p className="muted">
+          Dla pracownicy, której umowa ustała w ciąży, a innego zatrudnienia nie zapewniono. Kwota jest jak zasiłek za urlop
+          macierzyński{catalog ? ` (${pct(catalog.ratesBps.maternity)} podstawy)` : ""}, od ustania zatrudnienia do dnia porodu. Wypłaca ZUS.
+        </p>
+        <Check
+          label="Chcę policzyć zasiłek do dnia porodu po ustaniu zatrudnienia"
+          checked={p.untilBirthEnabled}
+          onChange={(untilBirthEnabled) => up({ untilBirthEnabled })}
+        />
+        {p.untilBirthEnabled && (
+          <>
+            <Choices
+              label="Przyczyna ustania umowy"
+              value={p.untilBirthReason}
+              onChange={(untilBirthReason) => up({ untilBirthReason })}
+              options={[
+                { value: "bankruptcy", label: "Upadłość pracodawcy" },
+                { value: "liquidation", label: "Likwidacja pracodawcy" },
+                { value: "employer_death", label: "Śmierć pracodawcy" },
+                { value: "unlawful_dismissal", label: "Prawomocny wyrok", hint: "Rozwiązanie umowy z naruszeniem prawa" },
+              ]}
+            />
+            {p.untilBirthReason === "unlawful_dismissal" && (
+              <Check
+                label="Wyrok sądu jest prawomocny"
+                checked={p.untilBirthJudgmentFinal}
+                onChange={(untilBirthJudgmentFinal) => up({ untilBirthJudgmentFinal })}
+              />
+            )}
+            <Check
+              label="Zapewniono mi inne zatrudnienie"
+              hint="Wtedy zasiłek do dnia porodu nie przysługuje."
+              checked={p.untilBirthOtherJob}
+              onChange={(untilBirthOtherJob) => up({ untilBirthOtherJob })}
+            />
+            <TextInput
+              label="Dni od ustania zatrudnienia do porodu"
+              inputMode="numeric"
+              value={p.untilBirthDays}
+              onChange={(untilBirthDays) => up({ untilBirthDays })}
+              suffix="dni"
+            />
+            {s.mother.title !== "employee" && (
+              <div className="alert warn">Ten zasiłek dotyczy pracownicy. Tytuł matki to nie umowa o pracę.</div>
+            )}
+          </>
+        )}
+      </div>
+
+      {(p.enabled || p.rehabEnabled) && <SicknessBox r={sickness} basisGrosze={s.mother.basisGrosze} showSick={p.enabled} />}
     </>
   );
 }
 
-function SicknessBox({ r, basisGrosze }: { r: SicknessResult | ApiError | null; basisGrosze: number }) {
+function SicknessBox({ r, basisGrosze, showSick }: { r: SicknessResult | ApiError | null; basisGrosze: number; showSick: boolean }) {
   if (!basisGrosze) return <div className="alert warn">Podaj wynagrodzenie matki w kroku „Ubezpieczenie i dochód”, aby policzyć kwotę.</div>;
   if (r instanceof ApiError) return <div className="alert error">{r.message}</div>;
   if (!r) return <div className="card muted">Liczę…</div>;
   return (
     <div className="card">
-      <h3>Wynik zwolnienia w ciąży</h3>
+      <h3>{showSick ? "Wynik zwolnienia w ciąży" : "Wynik świadczenia rehabilitacyjnego"}</h3>
+      {showSick && (
+        <>
       {!r.eligible && <div className="alert warn">Za ten okres zasiłek chorobowy nie przysługuje.</div>}
       <div className="row">
         <span>Wynagrodzenie chorobowe (pracodawca)</span>
@@ -508,14 +615,38 @@ function SicknessBox({ r, basisGrosze }: { r: SicknessResult | ApiError | null; 
         <span>Okres zasiłkowy</span>
         <span>{r.periodLimitDays} dni</span>
       </div>
+        </>
+      )}
+      {r.rehab && (
+        <div style={{ marginTop: showSick ? 14 : 0 }}>
+          <h3>Świadczenie rehabilitacyjne</h3>
+          {!r.rehab.eligible && <div className="alert warn">Za podane dane świadczenie rehabilitacyjne nie jest liczone.</div>}
+          <div className="row">
+            <span>Pierwszy okres</span>
+            <span>
+              {r.rehab.firstDays} dni × {zl(r.rehab.firstDaily)} ({pct(r.rehab.firstRateBps)})
+            </span>
+          </div>
+          {r.rehab.laterDays > 0 && (
+            <div className="row">
+              <span>Dalszy okres</span>
+              <span>
+                {r.rehab.laterDays} dni × {zl(r.rehab.laterDaily)} ({pct(r.rehab.laterRateBps)})
+              </span>
+            </div>
+          )}
+          <div className="row">
+            <span>Razem</span>
+            <strong>{zl(r.rehab.total)}</strong>
+          </div>
+          <p className="hint">Wypłaca ZUS. Limit tego świadczenia to {r.rehab.maxDays} dni.</p>
+        </div>
+      )}
       {uniqueWarnings(r.warnings).map((w, i) => (
         <div key={`${w.code}-${i}`} className="alert warn" style={{ marginTop: 10 }}>
           {w.message}
         </div>
       ))}
-      <p className="hint" style={{ marginTop: 10 }}>
-        Po wyczerpaniu okresu zasiłkowego może przysługiwać świadczenie rehabilitacyjne — ten kalkulator jeszcze go nie liczy.
-      </p>
     </div>
   );
 }

@@ -139,7 +139,10 @@ export default function Guide() {
   }, [simReq]);
 
   // Zwolnienie w ciąży.
-  const sickReq = useDebounced(s.pregnancy.enabled && s.mother.basisGrosze ? JSON.stringify(sicknessRequest(s)) : "", 300);
+  const sickReq = useDebounced(
+    (s.pregnancy.enabled || s.pregnancy.rehabEnabled) && s.mother.basisGrosze ? JSON.stringify(sicknessRequest(s)) : "",
+    300,
+  );
   useEffect(() => {
     if (!sickReq) {
       setSickness(null);
@@ -204,7 +207,15 @@ export default function Guide() {
               <StepSplit {...props} />
             </>
           )}
-          {current?.id === "result" && <ResultView s={s} result={simError ? null : result} error={simError} loading={loading} />}
+          {current?.id === "result" && (
+            <ResultView
+              s={s}
+              result={simError ? null : result}
+              error={simError}
+              loading={loading}
+              sickness={sickness instanceof ApiError ? null : sickness}
+            />
+          )}
           {current?.id === "docs" && <DocumentsView s={s} result={simError ? null : result} />}
 
           {blocked.length > 0 && (

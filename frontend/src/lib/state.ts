@@ -38,6 +38,8 @@ export interface ParentForm {
   possibleShamEngagement: boolean;
 }
 
+export type UntilBirthReason = "bankruptcy" | "liquidation" | "employer_death" | "unlawful_dismissal";
+
 export interface PregnancyForm {
   enabled: boolean;
   insurance: "compulsory" | "voluntary" | "none";
@@ -47,6 +49,17 @@ export interface PregnancyForm {
   codeB: boolean;
   incapacityDays: string;
   sickPayDaysUsed: string;
+  rehabEnabled: boolean;
+  rehabAssessorGranted: boolean;
+  rehabBlockingEntitlement: boolean;
+  rehabInsuranceEnded: boolean;
+  rehabDays: string;
+  rehabInPregnancy: boolean;
+  untilBirthEnabled: boolean;
+  untilBirthReason: UntilBirthReason;
+  untilBirthOtherJob: boolean;
+  untilBirthJudgmentFinal: boolean;
+  untilBirthDays: string;
 }
 
 export interface GuideState {
@@ -135,6 +148,17 @@ export function initialState(): GuideState {
       codeB: true,
       incapacityDays: "30",
       sickPayDaysUsed: "0",
+      rehabEnabled: false,
+      rehabAssessorGranted: false,
+      rehabBlockingEntitlement: false,
+      rehabInsuranceEnded: false,
+      rehabDays: "",
+      rehabInPregnancy: true,
+      untilBirthEnabled: false,
+      untilBirthReason: "bankruptcy",
+      untilBirthOtherJob: false,
+      untilBirthJudgmentFinal: false,
+      untilBirthDays: "",
     },
     mother: emptyParent(true),
     father: emptyParent(true),
@@ -266,6 +290,15 @@ export function simulationRequest(s: GuideState, maternityDaysEntitled: number |
     mother: parentInput(s.mother, { maternityDays: motherDays }),
     father: parentInput(s.father, { maternityDays: fatherDays }),
     acceptance,
+    untilBirth:
+      s.situation === "birth" && s.pregnancy.untilBirthEnabled
+        ? {
+            reason: s.pregnancy.untilBirthReason,
+            otherEmploymentProvided: s.pregnancy.untilBirthOtherJob,
+            judgmentFinal: s.pregnancy.untilBirthJudgmentFinal,
+            daysUntilBirth: intOrNull(s.pregnancy.untilBirthDays) ?? 0,
+          }
+        : undefined,
   };
 }
 
@@ -279,11 +312,21 @@ export function sicknessRequest(s: GuideState): SicknessInput {
     age50Rule: p.age50Rule,
     codeB: p.codeB,
     inPregnancy: true,
-    incapacityDays: intOrNull(p.incapacityDays) ?? 0,
+    incapacityDays: p.enabled ? intOrNull(p.incapacityDays) ?? 0 : 0,
     sickPayDaysUsed: intOrNull(p.sickPayDaysUsed) ?? 0,
     previousPeriodDays: 0,
     gapDays: 0,
     basisGrosze: s.mother.basisGrosze,
+    rehab: p.rehabEnabled
+      ? {
+          requested: true,
+          assessorGranted: p.rehabAssessorGranted,
+          blockingEntitlement: p.rehabBlockingEntitlement,
+          insuranceEnded: p.rehabInsuranceEnded,
+          days: intOrNull(p.rehabDays) ?? 0,
+          inPregnancy: p.rehabInPregnancy,
+        }
+      : undefined,
   };
 }
 

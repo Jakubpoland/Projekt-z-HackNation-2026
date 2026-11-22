@@ -69,6 +69,16 @@ type Parameters struct {
 	WaitingDaysCompulsory int `json:"waitingDaysCompulsory"`
 	WaitingDaysVoluntary  int `json:"waitingDaysVoluntary"`
 
+	// Rehab rates are art. 19 of the sickness-benefit act: 90% for the first
+	// three months, 75% afterwards, and 100% (SickPregnancyRateBps) when the
+	// incapacity falls during pregnancy. Months are counted as DailyDivisor days
+	// because this core pays a daily rate. The quarterly valorization index
+	// (art. 19 ust. 2) is not stored here.
+	RehabFirstRateBps int `json:"rehabFirstRateBps"`
+	RehabLaterRateBps int `json:"rehabLaterRateBps"`
+	RehabFirstMonths  int `json:"rehabFirstMonths"`
+	RehabMaxMonths    int `json:"rehabMaxMonths"`
+
 	CombinedRequestDeadlineDays int `json:"combinedRequestDeadlineDays"`
 	PayerInsuredThreshold       int `json:"payerInsuredThreshold"`
 	DailyDivisor                int `json:"dailyDivisor"`
@@ -140,6 +150,11 @@ func Default() Parameters {
 		WaitingDaysCompulsory: 30,
 		WaitingDaysVoluntary:  90,
 
+		RehabFirstRateBps: 9000,
+		RehabLaterRateBps: 7500,
+		RehabFirstMonths:  3,
+		RehabMaxMonths:    12,
+
 		CombinedRequestDeadlineDays: 21,
 		PayerInsuredThreshold:       20,
 		DailyDivisor:                30,
@@ -165,6 +180,7 @@ func (p Parameters) Validate() error {
 		p.MaternityRateBps, p.ParentalRateBps, p.CombinedRequestRateBps,
 		p.SecondParentExclusiveRateBps, p.PaternityRateBps, p.SupplementaryRateBps,
 		p.SickPregnancyRateBps, p.SickDefaultRateBps, p.SickPayPregnancyRateBps,
+		p.RehabFirstRateBps, p.RehabLaterRateBps,
 	}
 	for _, r := range rates {
 		if r < 0 || r > 10000 {
@@ -179,6 +195,9 @@ func (p Parameters) Validate() error {
 	}
 	if p.PayerInsuredThreshold < 0 || p.BenefitPeriodDays <= 0 || p.MinWageGrosze <= 0 {
 		return apperr.E("PARAMS_RANGE", "Próg płatnika, okres zasiłkowy i płaca minimalna muszą być dodatnie.")
+	}
+	if p.RehabFirstMonths <= 0 || p.RehabMaxMonths < p.RehabFirstMonths {
+		return apperr.E("PARAMS_RANGE", "Świadczenie rehabilitacyjne trwa najpierw kilka miesięcy i nie dłużej niż 12.")
 	}
 	return nil
 }

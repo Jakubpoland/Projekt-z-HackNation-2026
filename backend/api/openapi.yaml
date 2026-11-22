@@ -138,6 +138,21 @@ components:
           properties:
             daysUntilAgeLimit:
               type: integer
+        untilBirth:
+          $ref: "#/components/schemas/UntilBirthInput"
+    UntilBirthInput:
+      type: object
+      description: Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu (art. 30).
+      properties:
+        reason:
+          type: string
+          enum: [bankruptcy, liquidation, employer_death, unlawful_dismissal]
+        otherEmploymentProvided:
+          type: boolean
+        judgmentFinal:
+          type: boolean
+        daysUntilBirth:
+          type: integer
     ParentInput:
       type: object
       properties:
@@ -262,3 +277,21 @@ components:
           type: integer
         basisGrosze:
           type: integer
+        rehab:
+          $ref: "#/components/schemas/RehabInput"
+    RehabInput:
+      type: object
+      description: Świadczenie rehabilitacyjne po zasiłku chorobowym (art. 18–19).
+      properties:
+        requested:
+          type: boolean
+        assessorGranted:
+          type: boolean
+        blockingEntitlement:
+          type: boolean
+        insuranceEnded:
+          type: boolean
+        days:
+          type: integer
+        inPregnancy:
+          type: boolean

@@ -33,6 +33,19 @@
 - Okres zasiłkowy 270 dni. W ciąży nie dolicza się okresów sprzed przerwy. Poza ciążą dolicza się je, gdy przerwa nie przekroczyła 60 dni.
 - Wyczekiwanie: 30 dni obowiązkowe, 90 dobrowolne. Wyjątki ustawowe przyjmuje flaga `waitingPeriodAlreadyMet`, rdzeń ich nie wymienia.
 
+## Świadczenie rehabilitacyjne
+
+- Po zasiłku chorobowym, gdy lekarz orzecznik ZUS (albo komisja) potwierdzi rokowanie. Bez tej decyzji kwota jest zero. Kalkulator nie orzeka.
+- Art. 18 ust. 7 (emerytura, renta z tytułu niezdolności, zasiłek dla bezrobotnych, zasiłek i świadczenie przedemerytalne, rodzicielskie świadczenie uzupełniające, nauczycielskie świadczenie kompensacyjne, urlop dla poratowania zdrowia) wyłącza prawo. Flaga `blockingEntitlement`.
+- Stawki z art. 19: 90% (`rehabFirstRateBps` 9000) przez pierwsze 3 miesiące, potem 75% (`rehabLaterRateBps` 7500). W ciąży 100% (`sickPregnancyRateBps`). Miesiąc w tym rdzeniu to `dailyDivisor` dni (30), bo stawka dzienna dzieli miesiąc przez 30. Limit 12 takich miesięcy.
+- Waloryzacji z art. 19 ust. 2 nie ma: wskaźnika z Monitora Polskiego nie ma w parametrach. Po ustaniu ubezpieczenia limit z art. 46 też nie jest ucinany — przeciętnego wynagrodzenia nie ma w parametrach. Oba przypadki dają ostrzeżenie.
+
+## Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu
+
+- Art. 30 i treść zadania: pracownica, umowa ustała w ciąży, nie zapewniono innego zatrudnienia. Przyczyny: `bankruptcy`, `liquidation`, `employer_death`, a przy `unlawful_dismissal` potrzebny jest prawomocny wyrok.
+- Stawka to `maternityRateBps` (100%), nie 81,5%. Dni liczy klient. Płatnik to ZUS. Odcinek `maternity_amount_until_birth` wchodzi do sumy matki.
+- Po porodzie zwykły zasiłek macierzyński nadal wymaga ubezpieczenia w dniu porodu w tej symulacji. Gdy go nie ma, jest tylko okres do porodu i ostrzeżenie.
+
 ## Czego model jeszcze nie robi
 
-Świadczenie rehabilitacyjne, zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu po upadłości albo wyroku, pełne składniki wynagrodzenia z Z-3, kalendarz części urlopu co do dat, nakładanie urlopu ojcowskiego na urlop rodzicielski w dniach. Daty zostają po stronie frontu; backend dostaje dni i tygodnie.
+Pełne składniki wynagrodzenia z Z-3, kalendarz części urlopu co do dat, nakładanie urlopu ojcowskiego na urlop rodzicielski w dniach. Daty zostają po stronie frontu; backend dostaje dni i tygodnie.

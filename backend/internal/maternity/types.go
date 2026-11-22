@@ -32,6 +32,22 @@ type Input struct {
 	Father   ParentInput  `json:"father"`
 	// Acceptance is required for foster and adoption. Days are counted by the client.
 	Acceptance *AcceptanceInput `json:"acceptance"`
+	// UntilBirth is zasiłek w wysokości zasiłku macierzyńskiego paid until the
+	// day of birth, after employment ended during pregnancy.
+	UntilBirth *UntilBirthInput `json:"untilBirth,omitempty"`
+}
+
+// UntilBirthInput is art. 30 of the sickness-benefit act, as named in the contest task.
+// The amount is 100% of the maternity-benefit basis. Days are counted by the client.
+type UntilBirthInput struct {
+	// Reason is bankruptcy, liquidation, employer_death or unlawful_dismissal.
+	Reason string `json:"reason"`
+	// OtherEmploymentProvided is true when the employee was given another job.
+	// Art. 30 ust. 3 then does not pay the benefit.
+	OtherEmploymentProvided bool `json:"otherEmploymentProvided"`
+	// JudgmentFinal is required when Reason is unlawful_dismissal.
+	JudgmentFinal  bool `json:"judgmentFinal"`
+	DaysUntilBirth int  `json:"daysUntilBirth"`
 }
 
 // SupplementaryInput is the hospital data for complementary maternity leave.

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Segment, SimulationResult } from "@/lib/api";
+import type { Segment, SimulationResult, SicknessResult } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { addDays, fmtDate, parseDate } from "@/lib/dates";
 import { PAYER, PERSON, pct, segmentLabel, uniqueWarnings, weeksDays, zl } from "@/lib/format";
@@ -8,6 +8,7 @@ import type { GuideState } from "@/lib/state";
 
 /** Kolejność odcinków w przykładowym harmonogramie (nie wpływa na kwoty). */
 const ORDER = [
+  "mother-until-birth",
   "mother-maternity",
   "father-maternity",
   "mother-supplementary",
@@ -40,6 +41,11 @@ export function schedule(s: GuideState, segs: Segment[]): ScheduledSegment[] {
       out.push({ ...seg, start: event, end: addDays(event, seg.calendarDays - 1) });
       continue;
     }
+    if (seg.benefit === "maternity_amount_until_birth") {
+      const end = addDays(event, -1);
+      out.push({ ...seg, start: addDays(event, -seg.calendarDays), end });
+      continue;
+    }
     let start = cursor;
     if (seg.benefit === "parental_leave" && seg.person === "mother" && !motherParentalStart) motherParentalStart = cursor;
     if (s.simultaneousParental && seg.id === "father-parental-exclusive" && motherParentalStart) start = motherParentalStart;
@@ -56,7 +62,19 @@ function idx(id: string) {
   return i === -1 ? 99 : i;
 }
 
-export function ResultView({ s, result, error, loading }: { s: GuideState; result: SimulationResult | null; error: ApiError | null; loading: boolean }) {
+export function ResultView({
+  s,
+  result,
+  error,
+  loading,
+  sickness,
+}: {
+  s: GuideState;
+  result: SimulationResult | null;
+  error: ApiError | null;
+  loading: boolean;
+  sickness?: SicknessResult | null;
+}) {
   if (error) return <div className="alert error"><strong>Nie da się policzyć tego wariantu.</strong> {error.message}</div>;
   if (!result) return <div className="card muted">{loading ? "Liczę…" : "Uzupełnij dane w poprzednich krokach."}</div>;
 
@@ -181,6 +199,8 @@ export function ResultView({ s, result, error, loading }: { s: GuideState; resul
         </div>
       )}
 
+      {sickness?.rehab && <RehabCard rehab={sickness.rehab} />}
+
       <EntitlementCard r={result} />
 
       {result.warnings.length > 0 && (
@@ -194,6 +214,34 @@ export function ResultView({ s, result, error, loading }: { s: GuideState; resul
         </div>
       )}
     </>
+  );
+}
+
+function RehabCard({ rehab }: { rehab: NonNullable<SicknessResult["rehab"]> }) {
+  return (
+    <div className="card">
+      <h3>Świadczenie rehabilitacyjne</h3>
+      {!rehab.eligible && <div className="alert warn">Za podane dane świadczenie rehabilitacyjne nie jest liczone.</div>}
+      <div className="row">
+        <span>Pierwszy okres</span>
+        <span>
+          {rehab.firstDays} dni × {zl(rehab.firstDaily)} ({pct(rehab.firstRateBps)})
+        </span>
+      </div>
+      {rehab.laterDays > 0 && (
+        <div className="row">
+          <span>Dalszy okres</span>
+          <span>
+            {rehab.laterDays} dni × {zl(rehab.laterDaily)} ({pct(rehab.laterRateBps)})
+          </span>
+        </div>
+      )}
+      <div className="row">
+        <span>Razem, wypłaca ZUS</span>
+        <strong>{zl(rehab.total)}</strong>
+      </div>
+      <p className="hint">To nie jest zasiłek macierzyński. Kwota nie wchodzi do sumy urlopów powyżej. Limit: {rehab.maxDays} dni.</p>
+    </div>
   );
 }
 

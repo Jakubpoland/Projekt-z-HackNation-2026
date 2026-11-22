@@ -9,6 +9,7 @@ type Catalog struct {
 	RatesBps          RatesBps      `json:"ratesBps"`
 	Basis             BasisInfo     `json:"basis"`
 	Sickness          SicknessInfo  `json:"sickness"`
+	Rehab             RehabInfo     `json:"rehab"`
 	Notes             []string      `json:"notes"`
 }
 
@@ -82,6 +83,17 @@ type SicknessInfo struct {
 	PayerInsuredThreshold int `json:"payerInsuredThreshold"`
 }
 
+// RehabInfo is świadczenie rehabilitacyjne (art. 18–19).
+// PregnancyRateBps is 100% when the incapacity falls during pregnancy.
+// The quarterly wage-growth index is not part of this catalog.
+type RehabInfo struct {
+	FirstMonths      int `json:"firstMonths"`
+	MaxMonths        int `json:"maxMonths"`
+	FirstRateBps     int `json:"firstRateBps"`
+	LaterRateBps     int `json:"laterRateBps"`
+	PregnancyRateBps int `json:"pregnancyRateBps"`
+}
+
 // BuildCatalog projects the current parameters into the public catalog.
 func BuildCatalog(p Parameters) Catalog {
 	rows := make([]ChildWeeks, 0, len(p.MaternityWeeksByChildren)-1)
@@ -140,6 +152,13 @@ func BuildCatalog(p Parameters) Catalog {
 			WaitingDaysVoluntary:  p.WaitingDaysVoluntary,
 			PayerInsuredThreshold: p.PayerInsuredThreshold,
 		},
+		Rehab: RehabInfo{
+			FirstMonths:      p.RehabFirstMonths,
+			MaxMonths:        p.RehabMaxMonths,
+			FirstRateBps:     p.RehabFirstRateBps,
+			LaterRateBps:     p.RehabLaterRateBps,
+			PregnancyRateBps: p.SickPregnancyRateBps,
+		},
 		Notes: []string{
 			"Część 9 tygodni urlopu rodzicielskiego każdego z rodziców jest niezbywalna i wchodzi w pulę, a nie dokłada się do niej.",
 			"Wniosek matki złożony nie później niż 21 dni po porodzie ustala 81,5% za urlop macierzyński i rodzicielski, z wyjątkiem 9 tygodni drugiego rodzica (70%).",
@@ -147,6 +166,8 @@ func BuildCatalog(p Parameters) Catalog {
 			"Łączenie urlopu rodzicielskiego z pracą dotyczy pracownika i maksymalnie połowy etatu. Wydłużenie = dni urlopu × wymiar etatu, z odrzuceniem niepełnego dnia.",
 			"Stawka dzienna = miesięczna / 30, z zaokrągleniem połowy w górę do grosza.",
 			"Formularze ZUR, ZAO i Z-3b są zlikwidowane od 24 października 2026. Wniosek o zasiłek to ZAM.",
+			"Świadczenie rehabilitacyjne: 90% podstawy przez pierwsze trzy miesiące, potem 75%, a 100%, gdy niezdolność przypada w ciąży. Nie dłużej niż 12 miesięcy. Wskaźnika waloryzacji z Monitora Polskiego nie ma w parametrach.",
+			"Zasiłek w wysokości zasiłku macierzyńskiego do dnia porodu: 100% podstawy, po ustaniu zatrudnienia pracownicy w ciąży z powodu śmierci pracodawcy, upadłości, likwidacji albo prawomocnego wyroku.",
 		},
 	}
 }
