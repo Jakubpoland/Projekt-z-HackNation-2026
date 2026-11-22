@@ -17,6 +17,14 @@ npm run dev                  # http://localhost:3000 — wstęp; kalkulator jest
 
 `npm run build` i `npm run typecheck` sprawdzają typy i budują wersję produkcyjną.
 
+Testy przeglądarkowe (Playwright, Chromium) same uruchamiają API i `next dev`:
+
+```bash
+cd frontend
+npx playwright install chromium   # raz, na tej maszynie
+npm run test:e2e
+```
+
 ## Struktura
 
 - `src/lib/api.ts` — typy i wywołania API (kontrakt: `agent/03-kontrakt-api.md`, `backend/api/openapi.yaml`)
