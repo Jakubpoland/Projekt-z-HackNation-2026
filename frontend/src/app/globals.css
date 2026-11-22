@@ -97,6 +97,16 @@ p { margin: 0 0 0.75em; }
   display: grid; place-items: center; font-weight: 800;
 }
 .header nav { display: flex; gap: 16px; font-size: 0.95rem; }
+.header nav a { text-decoration: none; color: var(--text); }
+.header nav a[aria-current="page"] { color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+
+.reading { max-width: 860px; margin: 0 auto; }
+.intro-hero h1 { font-size: 2rem; }
+.intro-ol { margin: 0 0 0.75em; padding-left: 1.2em; }
+.intro-ol li { margin: 0 0 0.55em; }
+.intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+@media (max-width: 700px) { .intro-grid { grid-template-columns: 1fr; } .intro-hero h1 { font-size: 1.6rem; } }
+a.btn { display: inline-block; text-decoration: none; }
 
 .container { max-width: 1760px; margin: 0 auto; padding: 20px 24px 64px; }
 @media (max-width: 640px) { .container, .header-inner { padding-left: 16px; padding-right: 16px; } }

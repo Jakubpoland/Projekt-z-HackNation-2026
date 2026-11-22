@@ -1,5 +1,5 @@
-import Guide from "@/components/Guide";
+import { Intro } from "@/components/Intro";
 
 export default function Home() {
-  return <Guide />;
+  return <Intro />;
 }

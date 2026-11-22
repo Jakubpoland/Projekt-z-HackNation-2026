@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,10 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </span>
               <span>Zasiłkowy Przewodnik Przyszłego Rodzica</span>
             </Link>
-            <nav aria-label="Główna">
-              <Link href="/">Przewodnik</Link>
-              {/* Panel parametrów (/admin) jest ukryty w menu, ale nadal dostępny pod adresem /admin. */}
-            </nav>
+            <SiteNav />
+            {/* Panel parametrów (/admin) jest ukryty w menu, ale nadal dostępny pod adresem /admin. */}
           </div>
         </header>
         <main className="container">{children}</main>

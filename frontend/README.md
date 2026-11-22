@@ -12,7 +12,7 @@ cd backend && go run ./cmd/api
 cd frontend
 npm install
 cp .env.example .env.local   # opcjonalnie, domyślnie http://localhost:8080
-npm run dev                  # http://localhost:3000
+npm run dev                  # http://localhost:3000 — wstęp; kalkulator jest pod /przewodnik
 ```
 
 `npm run build` i `npm run typecheck` sprawdzają typy i budują wersję produkcyjną.
